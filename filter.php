@@ -7,13 +7,15 @@ $_UNFILTERED_DIR = $_SERVER['HOME'] . '/Maildir/new';
 $mail = file( 'php://stdin' );
 $mailString = implode( '', $mail );
 
-$filename = $_SERVER['REQUEST_TIME'] . '.' . sha1( $mailString );
+$time = (isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time());
+$filename = $time . '.' . sha1( $mailString );
 
-if (strcmp( $_SERVER['EXTENSION'], 'bugmash' ) != 0)
-    || (strpos( $_SERVER['SENDER'], 'bugzilla-daemon@' ) !== 0)
+if ((! isset( $_SERVER['EXTENSION'] ))
+    || (! isset( $_SERVER['SENDER'] ))
+    || (strcmp( $_SERVER['EXTENSION'], 'bugmash' ) != 0)
+    || (strpos( $_SERVER['SENDER'], 'bugzilla-daemon@' ) !== 0))
 {
     // doesn't look like a bugmail, probably spam but possible bounce notifications. toss it in maildir
-
     file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
     exit( 0 );
 }
