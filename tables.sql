@@ -4,9 +4,9 @@ CREATE TABLE `requests` (
     `stamp` datetime NOT NULL,
     `attachment` int(10) unsigned NOT NULL,
     `title` varchar(255) NOT NULL,
-    `cancelled` tinyint(1) NOT NULL,
+    `cancelled` tinyint(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
-    KEY (`bug`)
+    KEY (`bug`),
     KEY (`stamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
