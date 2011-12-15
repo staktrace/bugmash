@@ -81,9 +81,17 @@ foreach ($mail as $mailLine) {
         if (preg_match( '/bug-(\d+)-/', $mailLine, $matches ) > 0) {
             $bugzillaHeaders[ 'id' ] = $matches[1];
         }
+    } else if (strpos( $mailLine, 'Subject:') === 0) {
+        $bugzillaHeaders[ 'subject' ] = trim( substr( $mailLine, 8 ) );
     } else if (strpos( $mailLine, 'Date:' ) === 0) {
-        $bugzillaHeaders[ 'date' ] = strtotime( substr( $mailLine, 5 ) );
+        $bugzillaHeaders[ 'date' ] = strtotime( trim( substr( $mailLine, 5 ) ) );
     }
+}
+
+function checkForField( $key ) {
+    global $bugzillaHeaders;
+    $key = strtolower( $key );
+    return isset( $bugzillaHeaders[ $key ] );
 }
 
 function getField( $key ) {
@@ -119,22 +127,37 @@ $bug = getField( 'id' );
 $type = getField( 'type' );
 $date = date( 'Y-m-d H:i:s', getField( 'date' ) );
 if ($type == 'request') {
-    $requestee = getField( 'flag-requestee' );
-    if ($requestee != $_ME) {
-        fail( 'Requestee is not me' );
-    }
-
     $matches = array();
+
     if (preg_match( '/\[Attachment (\d+)\]/', $mailText, $matches ) == 0) {
         fail( 'No attachment id' );
     }
     $attachment = $matches[1];
+
     if (preg_match( "/Attachment $attachment: ([^\n]*)/", $mailString, $matches ) == 0) {
         fail( 'No attachment title' );
     }
     $title = $matches[1];
-    $stmt = prepare( 'INSERT INTO requests (bug, stamp, attachment, title) VALUES (?, ?, ?, ?)' );
-    $stmt->bind_param( 'isis', $bug, $date, $attachment, $title );
+
+    if (! checkForField( 'flag-requestee' )) {
+        if (strpos( getField( 'subject' ), 'review granted' ) === 0) {
+            $granted = 1;
+        } else if (strpos( getField( 'subject' ), 'review not granted' ) === 0) {
+            $granted = 0;
+        } else {
+            fail( 'Unknown review response type' );
+        }
+        $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, granted) VALUES (?, ?, ?, ?, ?)' );
+        $stmt->bind_param( 'isisi', $bug, $date, $attachment, $title, $granted );
+    } else {
+        $requestee = getField( 'flag-requestee' );
+        if ($requestee != $_ME) {
+            fail( 'Requestee is not me' );
+        }
+
+        $stmt = prepare( 'INSERT INTO requests (bug, stamp, attachment, title) VALUES (?, ?, ?, ?)' );
+        $stmt->bind_param( 'isis', $bug, $date, $attachment, $title );
+    }
     $stmt->execute();
     if ($stmt->affected_rows != 1) {
         fail( 'Unable to insert request into DB: ' . $stmt->error );

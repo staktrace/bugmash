@@ -10,6 +10,18 @@ CREATE TABLE `requests` (
     KEY (`stamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `reviews` (
+    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `bug` int(10) unsigned NOT NULL,
+    `stamp` datetime NOT NULL,
+    `attachment` int(10) unsigned NOT NULL,
+    `title` varchar(255) NOT NULL,
+    `granted` tinyint(1) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY (`bug`),
+    KEY (`stamp`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE `changes` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
