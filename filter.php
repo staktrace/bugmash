@@ -103,14 +103,102 @@ function getField( $key ) {
     return $bugzillaHeaders[ $key ];
 }
 
-function normalizeReason( $reason ) {
+function normalizeReason( $reason, $watchReason ) {
+    // take the highest priority reason
     if (stripos( $reason, 'AssignedTo' ) !== FALSE) {
         return 'AssignedTo';
+    } else if (stripos( $reason, 'Reporter' ) !== FALSE) {
+        return 'Reporter';
     } else if (stripos( $reason, 'CC' ) !== FALSE) {
         return 'CC';
+    } else if (stripos( $reason, 'None' ) !== FALSE) {
+        if (strlen( $watchReason ) > 0) {
+            return 'Watch';
+        }
+        fail( "Empty watch reason with reason $reason" );
     } else {
         fail( "Unknown reason $reason" );
     }
+}
+
+function normalizeFieldList( $fieldString ) {
+    $words = array_filter( explode( ' ', $fieldString ) );
+    $fields = array();
+    $currentField = '';
+    for ($i = 0; $i < count( $words ); $i++) {
+        $word = $words[ $i ];
+        if ($word == 'Attachment' /* #abcdef (Flags|is) */) {
+            if ($i + 2 >= count( $words )) {
+                fail( 'Unrecognized field list (1): ' . print_r( $words, true ) );
+            }
+            $word .= ' ' . $words[ ++$i ];
+            $word .= ' ' . $words[ ++$i ];
+            if ($words[ $i ] == 'is' /* obsolete */) {
+                if ($i + 1 >= count( $words )) {
+                    fail( 'Unrecognized field list (2): ' . print_r( $words, true ) );
+                }
+                $word .= ' ' . $words[ ++$i ];
+            }
+        } else if ($word == 'Depends' /* On */
+            || $word == 'Target' /* Milestone */
+            || $word == 'Ever' /* Confirmed */)
+        {
+            if ($i + 1 >= count( $words )) {
+                fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
+            }
+            $word .= ' ' . $words[ ++$i ];
+        } else if ($word == 'Status') {
+            if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Whiteboard') {
+                $word .= ' '. $words[ ++$i ];
+            }
+        }
+        $fields[] = $word;
+    }
+    return $fields;
+}
+
+function parseChangeTable( $fields, $rows ) {
+    // get widths to avoid dying on new/old values with pipe characters
+    $columns = explode( '|', $rows[0] );
+    $widths = array_map( "strlen", $columns );
+    $oldval = '';
+    $newval = '';
+    $ixField = 0;
+    for ($i = 1; $i < count( $rows ); $i++) {
+        $col1 = trim( substr( $rows[$i], 0, $widths[0] ) );
+        $col2 = substr( $rows[$i], $widths[0] + 1, $widths[1] );
+        $col3 = substr( $rows[$i], $widths[0] + 1 + $widths[1] + 1 );
+        if (strlen( $col1 ) == 0 || $ixField >= count( $fields )) {
+            $oldval .= $col2;
+            $newval .= $col3;
+            continue;
+        }
+        $matchedStart = false;
+        if (strpos( $fields[ $ixField ], $col1 ) === 0) {
+            $matchedStart = true;
+            if ($ixField > 0) {
+                $oldvals[] = $oldval;
+                $newvals[] = $newval;
+            }
+            $oldval = $col2;
+            $newval = $col3;
+        }
+        if (strpos( $fields[ $ixField ], $col1 ) === strlen( $fields[ $ixField ] ) - strlen( $col1 )) {
+            if (! $matchedStart) {
+                $oldval .= $col2;
+                $newval .= $col3;
+            }
+            $ixField++;
+        }
+    }
+    $oldvals[] = $oldval;
+    $newvals[] = $newval;
+    if ($ixField != count( $fields )) {
+        fail( 'Unable to parse change table; using field list: ' . print_r( $fields, true ) . ' and data ' . print_r( $rows, true ) );
+    } else if (count( $fields ) != count( $oldvals )) {
+        fail( 'Value lists are not as long as field lists; using field list: ' . print_r( $fields, true ) . ' and data ' . print_r( $rows, true ) );
+    }
+    return array( $fields, $oldvals, $newvals );
 }
 
 function prepare( $query ) {
@@ -164,7 +252,7 @@ if ($type == 'request') {
     }
     success();
 } else if ($type == 'new') {
-    $reason = normalizeReason( getField( 'reason' ) );
+    $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
     $matches = array();
     if (preg_match( "/Summary: (.*) Classification:/", $mailText, $matches ) == 0) {
         fail( 'No summary for new bug' );
@@ -183,7 +271,28 @@ if ($type == 'request') {
         fail( 'Unable to insert new bug into DB: ' . $stmt->error );
     }
     success();
-// else if ($type == 'changed') 
+} else if ($type == 'changed') {
+    $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
+    $fields = normalizeFieldList( getField( 'changed-fields' ) );
+
+    if (count( $fields ) > 0) {
+        $matches = array();
+        if (preg_match( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n--/s", $mailString, $matches ) == 0) {
+            fail( 'No change table' );
+        }
+        list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $matches[1] ) );
+
+        $stmt = prepare( 'INSERT INTO changes (bug, stamp, reason, field, oldval, newval) VALUES (?, ?, ?, ?, ?, ?)' );
+        for ($i = 0; $i < count( $fields ); $i++) {
+            $stmt->bind_param( 'isssss', $bug, $date, $reason, $fields[$i], $oldvals[$i], $newvals[$i] );
+            $stmt->execute();
+            if ($stmt->affected_rows != 1) {
+                fail( 'Unable to insert field change into DB: ' . $stmt->error );
+            }
+        }
+    }
+    // TODO: handle new comments
+    success();
 } else {
     fail( 'Unknown type' );
 }
