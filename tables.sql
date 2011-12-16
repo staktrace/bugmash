@@ -41,6 +41,7 @@ CREATE TABLE `comments` (
     `bug` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
     `reason` varchar(10) NOT NULL,
+    `commentnum` int(10) unsigned NOT NULL,
     `author` varchar(255) NOT NULL,
     `comment` mediumtext NOT NULL,
     PRIMARY KEY (`id`),

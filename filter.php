@@ -203,10 +203,12 @@ function parseChangeTable( $fields, $rows ) {
 
 function prepare( $query ) {
     global $_DB;
-    include_once( 'pass.bugdb.php' );
-    $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
-    if (mysqli_connect_errno()) {
-        fail( 'Error connecting to db: ' . mysql_connect_error() );
+    if (is_null( $_DB )) {
+        include_once( 'pass.bugdb.php' );
+        $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
+        if (mysqli_connect_errno()) {
+            fail( 'Error connecting to db: ' . mysql_connect_error() );
+        }
     }
     return $_DB->prepare( $query );
 }
@@ -291,7 +293,22 @@ if ($type == 'request') {
             }
         }
     }
-    // TODO: handle new comments
+    $matches = array();
+    if (preg_match_all( "/--- Comment #\d+ from .* ---\n/", $mailString, $matches ) > 1) {
+        fail( 'Multiple comments markers found in bugmail!' );
+    }
+    $matches = array();
+    if (preg_match( "/\n--- Comment #(\d+) from ([^<]*) [^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches )) {
+        $commentNum = $matches[1];
+        $author = $matches[2];
+        $comment = $matches[3];
+        $stmt = prepare( 'INSERT INTO comments (bug, stamp, reason, commentnum, author, comment) VALUES (?, ?, ?, ?, ?, ?)' );
+        $stmt->bind_param( 'ississ', $bug, $date, $reason, $commentNum, $author, $comment );
+        $stmt->execute();
+        if ($stmt->affected_rows != 1) {
+            fail( 'Unable to insert new comment into DB: ' . $stmt->error );
+        }
+    }
     success();
 } else {
     fail( 'Unknown type' );
