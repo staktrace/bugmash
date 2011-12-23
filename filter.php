@@ -230,10 +230,23 @@ if ($type == 'request') {
     $title = $matches[1];
 
     if (! checkForField( 'flag-requestee' )) {
-        if (strpos( getField( 'subject' ), 'review granted' ) === 0) {
+        if (strpos( getField( 'subject' ), 'review granted' ) === 0 ||
+            strpos( getField( 'subject' ), 'feedback granted' ) === 0)
+        {
             $granted = 1;
-        } else if (strpos( getField( 'subject' ), 'review not granted' ) === 0) {
+        } else if (strpos( getField( 'subject' ), 'review not granted' ) === 0
+                || strpos( getField( 'subject' ), 'feedback not granted' ) === 0)
+        {
             $granted = 0;
+        } else if (strpos( getField( 'subject' ), 'review canceled' ) === 0
+                || strpos( getField( 'subject' ), 'feedback canceled' ) === 0)
+        {
+            $zero = 0;
+            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=?' );
+            $stmt->bind_param( 'ii', $zero, $attachment );
+            $stmt->execute();
+            // this may cancel something we don't have a record of; if so, ignore
+            success();
         } else {
             fail( 'Unknown review response type' );
         }
