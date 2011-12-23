@@ -141,7 +141,9 @@ function normalizeFieldList( $fieldString ) {
             }
         } else if ($word == 'Depends' /* On */
             || $word == 'Target' /* Milestone */
-            || $word == 'Ever' /* Confirmed */)
+            || $word == 'Ever' /* Confirmed */
+            || $word == 'Crash' /* Signature */
+            || $word == 'See' /* Also */)
         {
             if ($i + 1 >= count( $words )) {
                 fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
