@@ -279,10 +279,16 @@ if ($type == 'request') {
 
     if (count( $fields ) > 0) {
         $matches = array();
-        if (preg_match( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n--/s", $mailString, $matches ) == 0) {
+        $matchCount = preg_match_all( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER );
+        if ($matchCount == 0) {
             fail( 'No change table' );
         }
-        list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $matches[1] ) );
+        $tableRows = $matches[1][0];
+        for ($i = 1; $i < $matchCount; $i++) {
+            // append subsequent tables without header row
+            $tableRows .= substr( $matches[1][$i], strpos( $matches[1][$i], "\n" ) );
+        }
+        list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $tableRows ) );
 
         $stmt = prepare( 'INSERT INTO changes (bug, stamp, reason, field, oldval, newval) VALUES (?, ?, ?, ?, ?, ?)' );
         for ($i = 0; $i < count( $fields ); $i++) {
