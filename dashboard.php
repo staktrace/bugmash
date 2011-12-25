@@ -59,12 +59,14 @@ while ($row = $result->fetch_assoc()) {
 $result = loadTable( 'requests' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">r? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a></div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">%sr? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
+                                                ($row['cancelled'] ? '<strike>' : ''),
                                                 $_BASE_URL,
                                                 $row['bug'],
                                                 $row['attachment'],
-                                                escapeHTML( $row['title'] ) ) . "\n";
+                                                escapeHTML( $row['title'] ),
+                                                ($row['cancelled'] ? '</strike>' : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'request';
 }
 
