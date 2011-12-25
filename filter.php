@@ -319,7 +319,7 @@ if ($type == 'request') {
         fail( 'Multiple comments markers found in bugmail!' );
     }
     $matches = array();
-    if (preg_match( "/\n--- Comment #(\d+) from ([^<]*) [^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches )) {
+    if (preg_match( "/\n--- Comment #(\d+) from ([^<]*) <[^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches )) {
         $commentNum = $matches[1];
         $author = $matches[2];
         $comment = $matches[3];
