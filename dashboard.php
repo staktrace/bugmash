@@ -137,8 +137,17 @@ body {
     padding: 2px;
     border: 1px solid;
 }
-.title {
+.bug > div {
+    border-bottom: dashed 1px;
+}
+.bug >div:last-child {
+    border-bottom: none;
+}
+
+div.title {
     background-color: lightblue;
+    border-bottom: none;
+    margin-bottom: 2px;
 }
   </style>
  </head>
