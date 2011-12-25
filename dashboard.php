@@ -23,6 +23,10 @@ function escapeHTML( $stuff ) {
     return $stuff;
 }
 
+function stripWhitespace( $stuff ) {
+    return preg_replace( '/\s/', '', $stuff );
+}
+
 function column( &$reasons ) {
     if (array_search( 'review', $reasons ) !== FALSE) {
         return 0;
@@ -42,6 +46,7 @@ function column( &$reasons ) {
 }
 
 $reviewComments = array();
+$reviewFlags = array();
 
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
@@ -59,6 +64,8 @@ while ($row = $result->fetch_assoc()) {
     $reasons[ $row['bug'] ][] = 'review';
 
     $reviewComments[ $row['attachment'] ][] = $row['comment'];
+    $type = ($row['feedback'] ? 'feedback' : 'review');
+    $reviewFlags[ $row['attachment'] ][] = array( "{$type}?({$row['authoremail']})", "{$type}" . ($row['granted'] ? '+' : '-') );
 }
 
 $result = loadTable( 'requests' );
@@ -89,8 +96,25 @@ while ($row = $result->fetch_assoc()) {
 
 $result = loadTable( 'changes' );
 while ($row = $result->fetch_assoc()) {
+    $hide = false;
+    // hide duplicated review flag changes (one from Type=request email and one from Type=changed email)
+    if (strpos( $row['field'], 'Flags' ) !== FALSE) {
+        $matches = array();
+        if (preg_match( "/^Attachment #(\d+) Flags/", $row['field'], $matches ) > 0) {
+            if (isset( $reviewFlags[ $matches[1] ] )) {
+                foreach ($reviewFlags[ $matches[1] ] AS $reviewFlag) {
+                    if ($row['newval'] == $reviewFlag[1] && stripWhitespace( $row['oldval'] ) == $reviewFlag[0]) {
+                        $hide = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="d%d">%s: %s &rarr; %s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="d%d">%s: %s &rarr; %s</div>',
+                                                ($hide ? ' style="display: none"' : ''),
                                                 $row['id'],
                                                 escapeHTML( $row['field'] ),
                                                 escapeHTML( $row['oldval'] ),
