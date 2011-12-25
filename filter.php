@@ -260,12 +260,16 @@ if ($type == 'request') {
         } else {
             fail( 'Unknown review response type' );
         }
+        if (preg_match( "/\n(.*) <.*> has (?:not )?granted/", $mailString, $matches ) == 0) {
+            fail( 'Unable to determine author of review' );
+        }
+        $author = $matches[1];
         $comment = '';
         if (preg_match( "/Additional Comments from.*\n--*-\n\n(.*)/s", $mailString, $matches ) > 0) {
             $comment = $matches[1];
         }
-        $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, feedback, granted, comment) VALUES (?, ?, ?, ?, ?, ?, ?)' );
-        $stmt->bind_param( 'isisiis', $bug, $date, $attachment, $title, $feedback, $granted, $comment );
+        $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, feedback, author, granted, comment) VALUES (?, ?, ?, ?, ?, ?, ?, ?)' );
+        $stmt->bind_param( 'isisisis', $bug, $date, $attachment, $title, $feedback, $author, $granted, $comment );
     } else {
         $requestee = getField( 'flag-requestee' );
         if ($requestee != $_ME) {

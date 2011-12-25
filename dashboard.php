@@ -44,8 +44,9 @@ function column( &$reasons ) {
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="r%d">%s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="r%d">%s: %s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
+                                                escapeHTML( $row['author'] ),
                                                 ($row['feedback'] ? 'f' : 'r'),
                                                 ($row['granted'] ? '+' : '-'),
                                                 $_BASE_URL,
