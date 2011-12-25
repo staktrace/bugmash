@@ -44,12 +44,14 @@ function column( &$reasons ) {
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="r%d">r%s <a href="%s/attachment.cgi?id=%d&action=edit">%s</a></div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="r%d">%s%s <a href="%s/attachment.cgi?id=%d&action=edit">%s</a>%s</div>',
                                                 $row['id'],
+                                                ($row['feedback'] ? 'f' : 'r'),
                                                 ($row['granted'] ? '+' : '-'),
                                                 $_BASE_URL,
                                                 $row['attachment'],
-                                                escapeHTML( $row['title'] ) ) . "\n";
+                                                escapeHTML( $row['title'] ),
+                                                (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'review';
 }
 
