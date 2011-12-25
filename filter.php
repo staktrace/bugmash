@@ -236,14 +236,18 @@ if ($type == 'request') {
     $title = $matches[1];
 
     if (! checkForField( 'flag-requestee' )) {
-        if (strpos( getField( 'subject' ), 'review granted' ) === 0 ||
-            strpos( getField( 'subject' ), 'feedback granted' ) === 0)
-        {
+        if (strpos( getField( 'subject' ), 'review granted' ) === 0) {
             $granted = 1;
-        } else if (strpos( getField( 'subject' ), 'review not granted' ) === 0
-                || strpos( getField( 'subject' ), 'feedback not granted' ) === 0)
-        {
+            $feedback = 0;
+        } else if (strpos( getField( 'subject' ), 'feedback granted' ) === 0) {
+            $granted = 1;
+            $feedback = 1;
+        } else if (strpos( getField( 'subject' ), 'review not granted' ) === 0) {
             $granted = 0;
+            $feedback = 0;
+        } else if (strpos( getField( 'subject' ), 'feedback not granted' ) === 0) {
+            $granted = 0;
+            $feedback = 1;
         } else if (strpos( getField( 'subject' ), 'review canceled' ) === 0
                 || strpos( getField( 'subject' ), 'feedback canceled' ) === 0)
         {
@@ -256,8 +260,12 @@ if ($type == 'request') {
         } else {
             fail( 'Unknown review response type' );
         }
-        $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, granted) VALUES (?, ?, ?, ?, ?)' );
-        $stmt->bind_param( 'isisi', $bug, $date, $attachment, $title, $granted );
+        $comment = '';
+        if (preg_match( "/Additional Comments from.*\n--*-\n\n(.*)/s", $mailString, $matches ) > 0) {
+            $comment = $matches[1];
+        }
+        $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, feedback, granted, comment) VALUES (?, ?, ?, ?, ?, ?, ?)' );
+        $stmt->bind_param( 'isisiis', $bug, $date, $attachment, $title, $feedback, $granted, $comment );
     } else {
         $requestee = getField( 'flag-requestee' );
         if ($requestee != $_ME) {

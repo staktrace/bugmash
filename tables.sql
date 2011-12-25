@@ -16,7 +16,9 @@ CREATE TABLE `reviews` (
     `stamp` datetime NOT NULL,
     `attachment` int(10) unsigned NOT NULL,
     `title` varchar(255) NOT NULL,
+    `feedback` tinyint(1) NOT NULL,
     `granted` tinyint(1) NOT NULL,
+    `comment` mediumtext NOT NulL,
     PRIMARY KEY (`id`),
     KEY (`bug`),
     KEY (`stamp`)
