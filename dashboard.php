@@ -44,11 +44,12 @@ function column( &$reasons ) {
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="r%d">%s%s <a href="%s/attachment.cgi?id=%d&action=edit">%s</a>%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="r%d">%s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
                                                 ($row['feedback'] ? 'f' : 'r'),
                                                 ($row['granted'] ? '+' : '-'),
                                                 $_BASE_URL,
+                                                $row['bug'],
                                                 $row['attachment'],
                                                 escapeHTML( $row['title'] ),
                                                 (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
@@ -58,20 +59,19 @@ while ($row = $result->fetch_assoc()) {
 $result = loadTable( 'requests' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="q%d">r? <a href="%s/attachment.cgi?id=%d&action=edit">%s</a> [<a href="%s/attachment.cgi?id=%d&action=diff">Diff</a>]</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">r? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a></div>',
                                                 $row['id'],
                                                 $_BASE_URL,
+                                                $row['bug'],
                                                 $row['attachment'],
-                                                escapeHTML( $row['title'] ),
-                                                $_BASE_URL,
-                                                $row['attachment'] ) . "\n";
+                                                escapeHTML( $row['title'] ) ) . "\n";
     $reasons[ $row['bug'] ][] = 'request';
 }
 
 $result = loadTable( 'newbugs' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="n%d">New: <a href="%s/show_bug.cgi?id=%d">%s</a></div><div class="desc">%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="n%d">New: <a href="%s/show_bug.cgi?id=%d">%s</a></div><div class="desc">%s</div>',
                                                 $row['id'],
                                                 $_BASE_URL,
                                                 $row['bug'],
@@ -83,7 +83,7 @@ while ($row = $result->fetch_assoc()) {
 $result = loadTable( 'changes' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="d%d">%s: %s &rarr; %s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="d%d">%s: %s &rarr; %s</div>',
                                                 $row['id'],
                                                 escapeHTML( $row['field'] ),
                                                 escapeHTML( $row['oldval'] ),
@@ -94,7 +94,7 @@ while ($row = $result->fetch_assoc()) {
 $result = loadTable( 'comments' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
                                                 $row['id'],
                                                 escapeHTML( $row['author'] ),
                                                 $_BASE_URL,
@@ -107,7 +107,7 @@ while ($row = $result->fetch_assoc()) {
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $block = sprintf( '<div class="bug" id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a></div>%s</div>',
+    $block = sprintf( '<div class="bug" id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a><a class="wipe" href="#">X</a></div>%s</div>',
                       $bug,
                       $_BASE_URL,
                       $bug,
@@ -137,19 +137,46 @@ body {
     padding: 2px;
     border: 1px solid;
 }
-.bug > div {
+.row {
     border-bottom: dashed 1px;
 }
-.bug >div:last-child {
+.row:last-child {
     border-bottom: none;
 }
-
 div.title {
     background-color: lightblue;
-    border-bottom: none;
     margin-bottom: 2px;
 }
+a.wipe {
+    float: right;
+}
   </style>
+  <script type="text/javascript">
+    function wipe(e) {
+        var block = e.target;
+        while (block.className != "bug") {
+            block = block.parentNode;
+        }
+        var items = block.querySelectorAll( "div.row" );
+        var ids = new Array();
+        for (var i = 0; i < items.length; i++) {
+            ids.push( items[i].id );
+        }
+        block.style.display = 'none';
+        // TODO: XHR send ids to remove; on success do:
+        // block.parentNode.removeChild(block);
+        // on failure do:
+        // block.style.display = 'block';
+        // e.target.textContent = "[Error]";
+    }
+
+    document.addEventListener( "DOMContentLoaded", function() {
+        var wipers = document.querySelectorAll( "a.wipe" );
+        for (var i = 0; i < wipers.length; i++) {
+            wipers[i].addEventListener( "click", wipe, true );
+        }
+    }, true );
+  </script>
  </head>
  <body>
 <?php
