@@ -105,7 +105,7 @@ while ($row = $result->fetch_assoc()) {
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $block = sprintf( '<div id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a></div>%s</div>',
+    $block = sprintf( '<div class="bug" id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a></div>%s</div>',
                       $bug,
                       $_BASE_URL,
                       $bug,
@@ -122,10 +122,21 @@ $_DB->close();
  <head>
   <title>Bugmash Dashboard</title>
   <style type="text/css">
+body {
+    font-family: sans-serif;
+    font-size: 10pt;
+}
 .column {
     width: 25%;
     float: left;
+}
+.bug {
+    margin: 2px;
+    padding: 2px;
     border: 1px solid;
+}
+.title {
+    background-color: lightblue;
 }
   </style>
  </head>
