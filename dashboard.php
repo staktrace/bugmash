@@ -1,6 +1,6 @@
 <?php
 
-include_once( 'pass.bugdb.php' );
+include_once( 'bugmash.config.php' );
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
     fail( 'Error connecting to db: ' . mysql_connect_error() );

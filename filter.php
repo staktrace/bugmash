@@ -1,9 +1,8 @@
 #!/usr/local/bin/php
 <?php
 
-// directory where emails that are not bugzilla emails will be dropped
-$_UNFILTERED_DIR = $_SERVER['HOME'] . '/Maildir/new';
-$_ME = 'bugmail.mozilla@staktrace.com';
+include_once( 'bugmash.config.php' );
+
 $_DB = null;
 
 $mail = file( 'php://stdin', FILE_IGNORE_NEW_LINES );
@@ -204,9 +203,8 @@ function parseChangeTable( $fields, $rows ) {
 }
 
 function prepare( $query ) {
-    global $_DB;
+    global $_DB, $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB;
     if (is_null( $_DB )) {
-        include_once( 'pass.bugdb.php' );
         $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
         if (mysqli_connect_errno()) {
             fail( 'Error connecting to db: ' . mysql_connect_error() );
