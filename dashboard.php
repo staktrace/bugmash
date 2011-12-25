@@ -45,8 +45,8 @@ function column( &$reasons ) {
     }
 }
 
-$reviewComments = array();
-$reviewFlags = array();
+$filterComments = array();
+$filterFlags = array();
 
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
@@ -63,9 +63,9 @@ while ($row = $result->fetch_assoc()) {
                                                 (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'review';
 
-    $reviewComments[ $row['attachment'] ][] = $row['comment'];
+    $filterComments[ $row['attachment'] ][] = $row['comment'];
     $type = ($row['feedback'] ? 'feedback' : 'review');
-    $reviewFlags[ $row['attachment'] ][] = array( "{$type}?({$row['authoremail']})", "{$type}" . ($row['granted'] ? '+' : '-') );
+    $filterFlags[ $row['attachment'] ][] = array( "{$type}?({$row['authoremail']})", "{$type}" . ($row['granted'] ? '+' : '-') );
 }
 
 $result = loadTable( 'requests' );
@@ -101,9 +101,9 @@ while ($row = $result->fetch_assoc()) {
     if (strpos( $row['field'], 'Flags' ) !== FALSE) {
         $matches = array();
         if (preg_match( "/^Attachment #(\d+) Flags/", $row['field'], $matches ) > 0) {
-            if (isset( $reviewFlags[ $matches[1] ] )) {
-                foreach ($reviewFlags[ $matches[1] ] AS $reviewFlag) {
-                    if ($row['newval'] == $reviewFlag[1] && stripWhitespace( $row['oldval'] ) == $reviewFlag[0]) {
+            if (isset( $filterFlags[ $matches[1] ] )) {
+                foreach ($filterFlags[ $matches[1] ] AS $filterFlag) {
+                    if (stripWhitespace( $row['oldval'] ) == $filterFlag[0] && stripWhitespace( $row['newval'] ) == $filterFlag[1]) {
                         $hide = true;
                         break;
                     }
@@ -129,8 +129,8 @@ while ($row = $result->fetch_assoc()) {
     if (strpos( $row['comment'], "Review of attachment" ) !== FALSE) {
         $matches = array();
         if (preg_match( "/^Comment on attachment (\d+)\n  -->.*\n.*\n\nReview of attachment \d+:\n -->.*\n--*-\n\n/", $row['comment'], $matches ) > 0) {
-            foreach ($reviewComments[ $matches[1] ] AS $reviewComment) {
-                if (strpos( $row['comment'], $reviewComment ) !== FALSE) {
+            foreach ($filterComments[ $matches[1] ] AS $filterComment) {
+                if (strpos( $row['comment'], $filterComment ) !== FALSE) {
                     $hide = true;
                     break;
                 }
