@@ -41,6 +41,8 @@ function column( &$reasons ) {
     }
 }
 
+$reviewComments = array();
+
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
@@ -55,6 +57,8 @@ while ($row = $result->fetch_assoc()) {
                                                 escapeHTML( $row['title'] ),
                                                 (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'review';
+
+    $reviewComments[ $row['attachment'] ][] = $row['comment'];
 }
 
 $result = loadTable( 'requests' );
@@ -96,8 +100,23 @@ while ($row = $result->fetch_assoc()) {
 
 $result = loadTable( 'comments' );
 while ($row = $result->fetch_assoc()) {
+    $hide = false;
+    // Hide duplicated review comments (one from Type=request email and one from Type=changed email)
+    if (strpos( $row['comment'], "Review of attachment" ) !== FALSE) {
+        $matches = array();
+        if (preg_match( "/^Comment on attachment (\d+)\n  -->.*\n.*\n\nReview of attachment \d+:\n -->.*\n--*-\n\n/", $row['comment'], $matches ) > 0) {
+            foreach ($reviewComments[ $matches[1] ] AS $reviewComment) {
+                if (strpos( $row['comment'], $reviewComment ) !== FALSE) {
+                    $hide = true;
+                    break;
+                }
+            }
+        }
+    }
+
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
+                                                ($hide ? ' style="display: none"' : ''),
                                                 $row['id'],
                                                 escapeHTML( $row['author'] ),
                                                 $_BASE_URL,
