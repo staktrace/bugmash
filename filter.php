@@ -230,7 +230,7 @@ if ($type == 'request') {
     }
     $attachment = $matches[1];
 
-    if (preg_match( "/Attachment $attachment: ([^\n]*)/", $mailString, $matches ) == 0) {
+    if (preg_match( "/Attachment $attachment: (.*)/", $mailString, $matches ) == 0) {
         fail( 'No attachment title' );
     }
     $title = $matches[1];
