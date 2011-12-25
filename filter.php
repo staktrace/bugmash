@@ -207,7 +207,7 @@ function prepare( $query ) {
     if (is_null( $_DB )) {
         $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
         if (mysqli_connect_errno()) {
-            fail( 'Error connecting to db: ' . mysql_connect_error() );
+            fail( 'Error connecting to db: ' . mysqli_connect_error() );
         }
     }
     $stmt = $_DB->prepare( $query );
