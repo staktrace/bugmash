@@ -212,7 +212,11 @@ function prepare( $query ) {
             fail( 'Error connecting to db: ' . mysql_connect_error() );
         }
     }
-    return $_DB->prepare( $query );
+    $stmt = $_DB->prepare( $query );
+    if ($_DB->errno) {
+        fail( 'Error preparing statement: ' . $_DB->error );
+    }
+    return $stmt;
 }
 
 $bug = getField( 'id' );
