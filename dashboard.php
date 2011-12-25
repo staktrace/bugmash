@@ -80,6 +80,9 @@ while ($row = $result->fetch_assoc()) {
                                                 escapeHTML( $row['title'] ),
                                                 ($row['cancelled'] ? '</strike>' : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'request';
+
+    $type = ($row['feedback'] ? 'feedback' : 'review');
+    $filterFlags[ $row['attachment'] ][] = array( '', "{$type}?({$_ME})" );
 }
 
 $result = loadTable( 'newbugs' );

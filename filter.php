@@ -250,8 +250,9 @@ if ($type == 'request') {
                 || strpos( getField( 'subject' ), 'feedback canceled' ) === 0)
         {
             $zero = 0;
-            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=?' );
-            $stmt->bind_param( 'ii', $zero, $attachment );
+            $feedback = (strpos( getField( 'subject' ), 'feedback' ) === 0) ? 1 : 0;
+            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=? AND feedback=?' );
+            $stmt->bind_param( 'iii', $zero, $attachment, $feedback );
             $stmt->execute();
             // this may cancel something we don't have a record of; if so, ignore
             success();
@@ -274,9 +275,16 @@ if ($type == 'request') {
         if ($requestee != $_ME) {
             fail( 'Requestee is not me' );
         }
+        if (strpos( getField( 'subject' ), 'review requested' ) === 0) {
+            $feedback = 0;
+        } else if (strpos( getField( 'subject' ), 'feedback requested' ) === 0) {
+            $feedback = 1;
+        } else {
+            fail( 'Unknown request type' );
+        }
 
-        $stmt = prepare( 'INSERT INTO requests (bug, stamp, attachment, title) VALUES (?, ?, ?, ?)' );
-        $stmt->bind_param( 'isis', $bug, $date, $attachment, $title );
+        $stmt = prepare( 'INSERT INTO requests (bug, stamp, attachment, title, feedback) VALUES (?, ?, ?, ?, ?)' );
+        $stmt->bind_param( 'isisi', $bug, $date, $attachment, $title, $feedback );
     }
     $stmt->execute();
     if ($stmt->affected_rows != 1) {
