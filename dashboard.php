@@ -218,11 +218,20 @@ a.wipe {
             ids.push( items[i].id );
         }
         block.style.display = 'none';
-        // TODO: XHR send ids to remove; on success do:
-        // block.parentNode.removeChild(block);
-        // on failure do:
-        // block.style.display = 'block';
-        // e.target.textContent = "[Error]";
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState != 4) {
+                return;
+            }
+            if (xhr.status == 200) {
+                block.parentNode.removeChild(block);
+            } else {
+                block.style.display = 'block';
+                e.target.textContent = "[E]";
+            }
+        };
+        xhr.open( "POST", "wipe.php", true );
+        xhr.send( "ids=" + ids.join( "," ) );
     }
 
     document.addEventListener( "DOMContentLoaded", function() {
