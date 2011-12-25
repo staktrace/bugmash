@@ -18,6 +18,7 @@ CREATE TABLE `reviews` (
     `title` varchar(255) NOT NULL,
     `feedback` tinyint(1) NOT NULL,
     `author` varchar(255) NOT NULL,
+    `authoremail` varchar(255) NOT NULL,
     `granted` tinyint(1) NOT NULL,
     `comment` mediumtext NOT NulL,
     PRIMARY KEY (`id`),
