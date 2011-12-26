@@ -15,7 +15,7 @@ if (mysqli_connect_errno()) {
 
 function loadTable( $table ) {
     global $_DB;
-    $result = $_DB->query( "SELECT * FROM $table ORDER BY stamp, id ASC" );
+    $result = $_DB->query( "SELECT * FROM $table WHERE viewed=0 ORDER BY stamp, id ASC" );
     if (! $result) {
         fail( "Unable to load $table" );
     }

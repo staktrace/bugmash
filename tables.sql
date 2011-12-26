@@ -2,19 +2,22 @@ CREATE TABLE `requests` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `attachment` int(10) unsigned NOT NULL,
     `title` varchar(255) NOT NULL,
     `feedback` tinyint(1) NOT NULL,
     `cancelled` tinyint(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`),
     KEY (`bug`),
-    KEY (`stamp`)
+    KEY (`stamp`),
+    KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `reviews` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `attachment` int(10) unsigned NOT NULL,
     `title` varchar(255) NOT NULL,
     `feedback` tinyint(1) NOT NULL,
@@ -24,13 +27,15 @@ CREATE TABLE `reviews` (
     `comment` mediumtext NOT NulL,
     PRIMARY KEY (`id`),
     KEY (`bug`),
-    KEY (`stamp`)
+    KEY (`stamp`),
+    KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `changes` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `reason` varchar(10) NOT NULL,
     `field` varchar(255) NOT NULL,
     `oldval` varchar(255) NOT NULL,
@@ -38,13 +43,14 @@ CREATE TABLE `changes` (
     PRIMARY KEY (`id`),
     KEY (`bug`),
     KEY (`stamp`),
-    KEY (`reason`)
+    KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `comments` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `reason` varchar(10) NOT NULL,
     `commentnum` int(10) unsigned NOT NULL,
     `author` varchar(255) NOT NULL,
@@ -52,13 +58,14 @@ CREATE TABLE `comments` (
     PRIMARY KEY (`id`),
     KEY (`bug`),
     KEY (`stamp`),
-    KEY (`reason`)
+    KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `newbugs` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `reason` varchar(10) NOT NULL,
     `title` varchar(255) NOT NULL,
     `author` varchar(255) NOT NULL,
@@ -66,5 +73,5 @@ CREATE TABLE `newbugs` (
     PRIMARY KEY (`id`),
     KEY (`bug`),
     KEY (`stamp`),
-    KEY (`reason`)
+    KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
