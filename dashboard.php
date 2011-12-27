@@ -6,7 +6,7 @@ function fail( $message ) {
     exit( 0 );
 }
 
-include_once( 'bugmash.config.php' );
+include_once( $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash/bugmash.config.php' );
 
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
@@ -172,6 +172,8 @@ foreach ($bblocks AS $bug => &$block) {
 $_DB->close();
 
 // render
+header( 'Content-Type: text/html; charset=utf8' );
+header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
 ?>
 <!DOCTYPE html>
 <html>
