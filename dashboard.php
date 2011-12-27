@@ -53,6 +53,8 @@ function column( &$reasons ) {
 $filterComments = array();
 $filterFlags = array();
 $numRows = 0;
+$bblocks = array();
+$columns = array();
 
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
