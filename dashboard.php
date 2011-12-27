@@ -231,8 +231,12 @@ a.wipe {
                 e.target.textContent = "[E]";
             }
         };
+        var body = "ids=" + ids.join( "," );
         xhr.open( "POST", "wipe.php", true );
-        xhr.send( "ids=" + ids.join( "," ) );
+        xhr.setRequestHeader( "Content-Type", "application/x-www-form-urlencoded" );
+        xhr.setRequestHeader( "Content-Length", body.length );
+        xhr.send( body );
+        e.preventDefault();
     }
 
     document.addEventListener( "DOMContentLoaded", function() {
