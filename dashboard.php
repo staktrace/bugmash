@@ -52,9 +52,11 @@ function column( &$reasons ) {
 
 $filterComments = array();
 $filterFlags = array();
+$numRows = 0;
 
 $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
+    $numRows++;
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="r%d">%s: %s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
@@ -75,6 +77,7 @@ while ($row = $result->fetch_assoc()) {
 
 $result = loadTable( 'requests' );
 while ($row = $result->fetch_assoc()) {
+    $numRows++;
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">%sr? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
@@ -92,6 +95,7 @@ while ($row = $result->fetch_assoc()) {
 
 $result = loadTable( 'newbugs' );
 while ($row = $result->fetch_assoc()) {
+    $numRows++;
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="n%d">New: <a href="%s/show_bug.cgi?id=%d">%s</a></div><div class="desc">%s</div>',
                                                 $row['id'],
@@ -120,6 +124,9 @@ while ($row = $result->fetch_assoc()) {
         }
     }
 
+    if (! $hide) {
+        $numRows++;
+    }
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="d%d">%s: %s &rarr; %s</div>',
                                                 ($hide ? ' style="display: none"' : ''),
@@ -146,6 +153,9 @@ while ($row = $result->fetch_assoc()) {
         }
     }
 
+    if (! $hide) {
+        $numRows++;
+    }
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
                                                 ($hide ? ' style="display: none"' : ''),
@@ -178,7 +188,7 @@ header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
 <!DOCTYPE html>
 <html>
  <head>
-  <title>Bugmash Dashboard</title>
+  <title>Bugmash Dashboard (<?php echo $numRows; ?>)</title>
   <style type="text/css">
 body {
     font-family: sans-serif;
