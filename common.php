@@ -18,6 +18,7 @@ function fail( $message ) {
     exit( 0 );
 }
 
-include_once( $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash/bugmash.config.php' );
+$BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash';
+include_once( $BUGMASH_DIR . '/bugmash.config.php' );
 
 ?>

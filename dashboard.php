@@ -1,13 +1,6 @@
 <?php
 
-function fail( $message ) {
-    header( 'HTTP/500 Error!' );
-    print $message;
-    exit( 0 );
-}
-
-$BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash';
-include_once( $BUGMASH_DIR . '/bugmash.config.php' );
+include_once( 'common.php' );
 
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
