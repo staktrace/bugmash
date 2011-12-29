@@ -6,7 +6,8 @@ function fail( $message ) {
     exit( 0 );
 }
 
-include_once( $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash/bugmash.config.php' );
+$BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash';
+include_once( $BUGMASH_DIR . '/bugmash.config.php' );
 
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
@@ -183,6 +184,14 @@ foreach ($bblocks AS $bug => &$block) {
 }
 $_DB->close();
 
+$errors = 0;
+$files = scandir( $BUGMASH_DIR );
+foreach ($files AS $file) {
+    if (strpos( strrev( $file ), "rre." ) === 0) {
+        $errors++;
+    }
+}
+
 // render
 header( 'Content-Type: text/html; charset=utf8' );
 header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
@@ -190,7 +199,7 @@ header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
 <!DOCTYPE html>
 <html>
  <head>
-  <title>Bugmash Dashboard (<?php echo $numRows; ?>)</title>
+  <title>Bugmash Dashboard (<?php echo $numRows, '+', $errors; ?>)</title>
   <base target="_blank"/>
   <style type="text/css">
 body {
