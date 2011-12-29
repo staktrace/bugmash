@@ -262,11 +262,16 @@ a.wipe {
  </head>
  <body>
 <?php
-foreach ($columns AS $column => &$buglist) {
-    ksort( $buglist, SORT_NUMERIC );
+for ($i = 0; $i < 4; $i++) {
+    $buglist = $columns[$i];
     echo '  <div class="column">', "\n";
-    foreach ($buglist AS $time => &$block) {
-        echo $block, "\n";
+    if (count( $buglist ) > 0) {
+        ksort( $buglist, SORT_NUMERIC );
+        foreach ($buglist AS $time => &$block) {
+            echo $block, "\n";
+        }
+    } else {
+        echo '   &nbsp;';
     }
     echo '  </div>', "\n";
 }
