@@ -365,9 +365,8 @@ for ($i = 0; $i < 4; $i++) {
         foreach ($buglist AS $time => &$block) {
             echo $block, "\n";
         }
-    } else {
-        echo '   &nbsp;';
     }
+    echo '   &nbsp;';   // so that after wiping all the blocks there is still space reserved
     echo '  </div>', "\n";
 }
 ?>
