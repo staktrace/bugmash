@@ -1,16 +1,10 @@
 <?php
 
-function fail( $message ) {
-    header( 'HTTP/500 Error!' );
-    print $message;
-    exit( 0 );
-}
+include_once( 'common.php' );
 
 if (! isset( $_POST['ids'] )) {
     fail( 'Required parameter not set' );
 }
-
-include_once( $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash/bugmash.config.php' );
 
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
