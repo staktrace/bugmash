@@ -213,6 +213,8 @@ body {
 }
 .row {
     border-bottom: dashed 1px;
+    word-wrap: break-word;  /* deprecated by css3-text, but the one that firefox picks up */
+    overflow-wrap: break-word hyphenate; /* what i really want as per css3-text */
 }
 .row:last-child {
     border-bottom: none;
