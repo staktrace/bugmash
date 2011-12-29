@@ -75,3 +75,12 @@ CREATE TABLE `newbugs` (
     KEY (`stamp`),
     KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `metadata` (
+    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `bug` int(10) unsigned NOT NULL DEFAULT 0,
+    `title` varchar(255) NOT NULL DEFAULT '',
+    `note` mediumtext NOT NULL DEFAULT '',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY (`bug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -7,6 +7,45 @@ if (mysqli_connect_errno()) {
     fail( 'Error connecting to db: ' . mysqli_connect_error() );
 }
 
+//
+// handle note updates
+//
+
+$stmt = $_DB->prepare( 'INSERT INTO metadata (bug, note) VALUES (?, ?) ON DUPLICATE KEY UPDATE note=VALUES(note)' );
+if ($_DB->errno) {
+    fail( 'Error preparing statement: ' . $_DB->error );
+}
+foreach ($_POST AS $key => $value) {
+    if (strncmp( $key, 'note', 4 ) == 0) {
+        $stmt->bind_param( 'is', intval( substr( $key, 4 ) ), trim( $value ) );
+        $stmt->execute();
+    }
+}
+
+//
+// read metadata
+//
+
+$meta_titles = array();
+$meta_notes = array();
+
+$result = $_DB->query( "SELECT * FROM metadata" );
+if (! $result) {
+    fail( "Unable to load metadata" );
+}
+while ($row = $result->fetch_assoc()) {
+    if (strlen( $row['title'] ) > 0) {
+        $meta_titles[ $row['bug'] ] = $row['title'];
+    }
+    if (strlen( $row['note'] ) > 0) {
+        $meta_notes[ $row['bug'] ] = $row['note'];
+    }
+}
+
+//
+// main helpers and rendering code
+//
+
 function loadTable( $table ) {
     global $_DB;
     $result = $_DB->query( "SELECT * FROM $table WHERE viewed=0 ORDER BY stamp, id ASC" );
@@ -163,11 +202,12 @@ while ($row = $result->fetch_assoc()) {
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $block = sprintf( '<div class="bug" id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a><a class="wipe" href="#">X</a></div>%s</div>',
+    $block = sprintf( '<div class="bug" id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s <a class="wipe" href="#">X</a></div>%s</div>',
                       $bug,
                       $_BASE_URL,
                       $bug,
                       $bug,
+                      escapeHTML( $meta_titles[ $bug ] ),
                       implode( "\n", $block ) ) . "\n";
     $columns[ column( $reasons[ $bug ] ) ][ $touchTime ] .= $block;
 }
@@ -219,6 +259,9 @@ div.title {
 a.wipe {
     float: right;
 }
+.noteinput {
+    width: 80%;
+}
   </style>
   <script type="text/javascript">
     function wipe(e) {
@@ -259,10 +302,61 @@ a.wipe {
             wipers[i].addEventListener( "click", wipe, true );
         }
     }, true );
+
+    function addNote() {
+        var notediv = document.createElement( "div" );
+        notediv.className = "newnote";
+        var sibling = document.getElementById( "notebuttons" );
+        sibling.parentNode.insertBefore( notediv, sibling );
+        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10"/></span>: <input class="noteinput" type="text"/><br/>';
+    }
+
+    function setNoteNames() {
+        var newnotes = document.getElementsByClassName( "newnote" );
+        while (newnotes.length > 0) {
+            var newnote = newnotes[0];
+            var bugnumbertext = newnote.getElementsByTagName( "input" )[0].value;
+            var bugnumber = parseInt( bugnumbertext );
+            if (isNaN( bugnumber )) {
+                if (window.confirm( "Unable to parse " + bugnumbertext + " as a bug number; replace with 0 and continue anyway?" )) {
+                    bugnumber = 0;
+                } else {
+                    return false;
+                }
+            }
+            var anchor = document.createElement( "a" );
+            anchor.setAttribute( "href", "<?php echo $_BASE_URL; ?>/show_bug.cgi?id=" + bugnumber );
+            anchor.textContent = "Bug " + bugnumber;
+            newnote.replaceChild( anchor, newnote.getElementsByTagName( "span" )[0] );
+            newnote.getElementsByTagName( "input" )[0].setAttribute( "name", "note" + bugnumber );
+            newnote.className = "note";
+        }
+        return true;
+    }
   </script>
  </head>
  <body>
 <?php
+echo '  <form onsubmit="return setNoteNames()" method="POST" target="_self">', "\n";
+echo '   <fieldset>', "\n";
+echo '    <legend>Bug notes</legend>', "\n";
+foreach ($meta_notes AS $bug => $note) {
+    echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: <input class="noteinput" type="text" name="note%d" value="%s"/><br/>%s</div>',
+                  $_BASE_URL,
+                  $bug,
+                  $bug,
+                  $bug,
+                  escapeHTML( $note ),
+                  escapeHTML( $meta_titles[ $bug ] ) ),
+        "\n";
+}
+echo '    <div id="notebuttons">', "\n";
+echo '     <input type="button" value="Add note" onclick="addNote()"/>', "\n";
+echo '     <input type="submit" id="savenotes" value="Save notes"/>', "\n";
+echo '    </div>', "\n";
+echo '   </fieldset>', "\n";
+echo '  </form>', "\n";
+
 for ($i = 0; $i < 4; $i++) {
     $buglist = $columns[$i];
     echo '  <div class="column">', "\n";
