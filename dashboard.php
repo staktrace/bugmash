@@ -191,6 +191,7 @@ header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
 <html>
  <head>
   <title>Bugmash Dashboard (<?php echo $numRows; ?>)</title>
+  <base target="_blank"/>
   <style type="text/css">
 body {
     font-family: sans-serif;
