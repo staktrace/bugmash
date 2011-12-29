@@ -127,9 +127,7 @@ while ($row = $result->fetch_assoc()) {
         }
     }
 
-    if (! $hide) {
-        $numRows++;
-    }
+    $numRows++;
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="d%d">%s: %s &rarr; %s</div>',
                                                 ($hide ? ' style="display: none"' : ''),
@@ -156,9 +154,7 @@ while ($row = $result->fetch_assoc()) {
         }
     }
 
-    if (! $hide) {
-        $numRows++;
-    }
+    $numRows++;
     $stamp = strtotime( $row['stamp'] );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
                                                 ($hide ? ' style="display: none"' : ''),
@@ -199,7 +195,7 @@ header( 'Strict-Transport-Security: max-age=31536000; includeSubDomains' );
 <!DOCTYPE html>
 <html>
  <head>
-  <title>Bugmash Dashboard (<?php echo $numRows, '+', $errors; ?>)</title>
+  <title>Bugmash Dashboard (<?php echo $numRows, ' unviewed, ', $errors, ' errors'; ?>)</title>
   <base target="_blank"/>
   <style type="text/css">
 body {
@@ -248,6 +244,7 @@ a.wipe {
             }
             if (xhr.status == 200) {
                 block.parentNode.removeChild(block);
+                document.title = document.title.replace( /\d+ unviewed/, function(unviewed) { return (unviewed - ids.length) + " unviewed"; } );
             } else {
                 block.style.display = 'block';
                 e.target.textContent = "[E]";
