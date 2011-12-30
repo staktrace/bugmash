@@ -61,6 +61,22 @@ function escapeHTML( $stuff ) {
     return $stuff;
 }
 
+function abbrevFlag( $flag ) {
+    if ($flag == 'review') {
+        return 'r';
+    } else if ($flag == 'feedback') {
+        return 'f';
+    } else if ($flag == 'approval-mozilla-aurora') {
+        return 'aurora';
+    } else if ($flag == 'approval-mozilla-beta') {
+        return 'beta';
+    } else if ($flag == 'approval-mozilla-release') {
+        return 'release';
+    } else {
+        return $flag;
+    }
+}
+
 function stripWhitespace( $stuff ) {
     return preg_replace( '/\s/', '', $stuff );
 }
@@ -96,7 +112,7 @@ while ($row = $result->fetch_assoc()) {
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="r%d">%s: %s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
                                                 escapeHTML( $row['author'] ),
-                                                ($row['feedback'] ? 'f' : 'r'),
+                                                abbrevFlag( $row['flag'] ),
                                                 ($row['granted'] ? '+' : '-'),
                                                 $_BASE_URL,
                                                 $row['bug'],
@@ -106,8 +122,7 @@ while ($row = $result->fetch_assoc()) {
     $reasons[ $row['bug'] ][] = 'review';
 
     $filterComments[ $row['attachment'] ][] = $row['comment'];
-    $type = ($row['feedback'] ? 'feedback' : 'review');
-    $filterFlags[ $row['attachment'] ][] = array( "{$type}?({$row['authoremail']})", "{$type}" . ($row['granted'] ? '+' : '-') );
+    $filterFlags[ $row['attachment'] ][] = array( "{$row['flag']}?({$row['authoremail']})", "{$type}" . ($row['granted'] ? '+' : '-') );
 }
 
 $result = loadTable( 'requests' );
@@ -124,8 +139,7 @@ while ($row = $result->fetch_assoc()) {
                                                 ($row['cancelled'] ? '</strike>' : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'request';
 
-    $type = ($row['feedback'] ? 'feedback' : 'review');
-    $filterFlags[ $row['attachment'] ][] = array( '', "{$type}?({$_ME})" );
+    $filterFlags[ $row['attachment'] ][] = array( '', "{$row['flag']}?({$_ME})" );
 }
 
 $result = loadTable( 'newbugs' );

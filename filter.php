@@ -247,57 +247,52 @@ if ($type == 'request') {
     $title = $matches[1];
 
     if (! checkForField( 'flag-requestee' )) {
-        if (strpos( getField( 'subject' ), 'review granted' ) === 0) {
-            $granted = 1;
-            $feedback = 0;
-        } else if (strpos( getField( 'subject' ), 'feedback granted' ) === 0) {
-            $granted = 1;
-            $feedback = 1;
-        } else if (strpos( getField( 'subject' ), 'review not granted' ) === 0) {
+        $subject = getField( 'subject' );
+        if (strpos( $subject, ' canceled: [Bug' ) !== FALSE) {
             $granted = 0;
-            $feedback = 0;
-        } else if (strpos( getField( 'subject' ), 'feedback not granted' ) === 0) {
+            $cancelled = 1;
+        } else if (strpos( $subject, ' not granted: [Bug' ) !== FALSE) {
             $granted = 0;
-            $feedback = 1;
-        } else if (strpos( getField( 'subject' ), 'review canceled' ) === 0
-                || strpos( getField( 'subject' ), 'feedback canceled' ) === 0)
-        {
-            $one = 1;
-            $feedback = (strpos( getField( 'subject' ), 'feedback' ) === 0) ? 1 : 0;
-            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=? AND feedback=?' );
-            $stmt->bind_param( 'iii', $one, $attachment, $feedback );
+            $cancelled = 0;
+        } else if (strpos( $subject, ' granted: [Bug' ) !== FALSE) {
+            $granted = 1;
+            $cancelled = 0;
+        } else {
+            fail( 'Unknown review response type' );
+        }
+
+        $flag = substr( $subject, 0, strpos( $subject, ' ' ) );
+        if ($cancelled) {
+            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=? AND flag=?' );
+            $stmt->bind_param( 'iis', $cancelled, $attachment, $flag );
             $stmt->execute();
             // this may cancel something we don't have a record of; if so, ignore
             success();
         } else {
-            fail( 'Unknown review response type' );
+            if (preg_match( "/\n(.*) <(.*)> has (?:not )?granted/", $mailString, $matches ) == 0) {
+                fail( 'Unable to determine author of review' );
+            }
+            $author = $matches[1];
+            $authorEmail = $matches[2];
+            $comment = '';
+            if (preg_match( "/Additional Comments from.*\n--*-\n\n(.*)/s", $mailString, $matches ) > 0) {
+                $comment = $matches[1];
+            }
+            $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, flag, author, authoremail, granted, comment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)' );
+            $stmt->bind_param( 'isissssis', $bug, $date, $attachment, $title, $flag, $author, $authorEmail, $granted, $comment );
         }
-        if (preg_match( "/\n(.*) <(.*)> has (?:not )?granted/", $mailString, $matches ) == 0) {
-            fail( 'Unable to determine author of review' );
-        }
-        $author = $matches[1];
-        $authorEmail = $matches[2];
-        $comment = '';
-        if (preg_match( "/Additional Comments from.*\n--*-\n\n(.*)/s", $mailString, $matches ) > 0) {
-            $comment = $matches[1];
-        }
-        $stmt = prepare( 'INSERT INTO reviews (bug, stamp, attachment, title, feedback, author, authoremail,granted, comment) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)' );
-        $stmt->bind_param( 'isisissis', $bug, $date, $attachment, $title, $feedback, $author, $authorEmail, $granted, $comment );
     } else {
         $requestee = getField( 'flag-requestee' );
         if ($requestee != $_ME) {
             fail( 'Requestee is not me' );
         }
-        if (strpos( getField( 'subject' ), 'review requested' ) === 0) {
-            $feedback = 0;
-        } else if (strpos( getField( 'subject' ), 'feedback requested' ) === 0) {
-            $feedback = 1;
-        } else {
+        $flag = substr( $subject, 0, strpos( $subject, ' ' ) );
+        if (strpos( getField( 'subject' ), "$flag requested" ) !== 0) {
             fail( 'Unknown request type' );
         }
 
-        $stmt = prepare( 'INSERT INTO requests (bug, stamp, attachment, title, feedback) VALUES (?, ?, ?, ?, ?)' );
-        $stmt->bind_param( 'isisi', $bug, $date, $attachment, $title, $feedback );
+        $stmt = prepare( 'INSERT INTO requests (bug, stamp, attachment, title, flag) VALUES (?, ?, ?, ?, ?)' );
+        $stmt->bind_param( 'isiss', $bug, $date, $attachment, $title, $flag );
     }
     $stmt->execute();
     if ($stmt->affected_rows != 1) {
