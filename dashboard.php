@@ -282,7 +282,7 @@ a.wipe {
             }
             if (xhr.status == 200) {
                 block.parentNode.removeChild(block);
-                document.title = document.title.replace( /\d+ unviewed/, function(unviewed) { return (unviewed - ids.length) + " unviewed"; } );
+                document.title = document.title.replace( /\d+ unviewed/, function(unviewed) { return (unviewed.split(" ")[0] - ids.length) + " unviewed"; } );
             } else {
                 block.style.display = 'block';
                 e.target.textContent = "[E]";
