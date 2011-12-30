@@ -250,10 +250,10 @@ if ($type == 'request') {
         } else if (strpos( getField( 'subject' ), 'review canceled' ) === 0
                 || strpos( getField( 'subject' ), 'feedback canceled' ) === 0)
         {
-            $zero = 0;
+            $one = 1;
             $feedback = (strpos( getField( 'subject' ), 'feedback' ) === 0) ? 1 : 0;
             $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=? AND feedback=?' );
-            $stmt->bind_param( 'iii', $zero, $attachment, $feedback );
+            $stmt->bind_param( 'iii', $one, $attachment, $feedback );
             $stmt->execute();
             // this may cancel something we don't have a record of; if so, ignore
             success();
