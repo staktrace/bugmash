@@ -345,16 +345,14 @@ if ($type == 'request') {
             }
         }
     }
+
     $matches = array();
-    if (preg_match_all( "/--- Comment #\d+ from .* ---\n/", $mailString, $matches ) > 1) {
-        fail( 'Multiple comments markers found in bugmail!' );
-    }
-    $matches = array();
-    if (preg_match( "/\n--- Comment #(\d+) from ([^<]*) <[^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches )) {
-        $commentNum = $matches[1];
-        $author = $matches[2];
-        $comment = $matches[3];
-        $stmt = prepare( 'INSERT INTO comments (bug, stamp, reason, commentnum, author, comment) VALUES (?, ?, ?, ?, ?, ?)' );
+    $matchCount = preg_match_all( "/- Comment #(\d+) from ([^<]*) <[^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches, PREG_PATTERN_ORDER );
+    $stmt = prepare( 'INSERT INTO comments (bug, stamp, reason, commentnum, author, comment) VALUES (?, ?, ?, ?, ?, ?)' );
+    for ($i = 0; $i < $matchCount; $i++) {
+        $commentNum = $matches[1][$i];
+        $author = $matches[2][$i];
+        $comment = $matches[3][$i];
         $stmt->bind_param( 'ississ', $bug, $date, $reason, $commentNum, $author, $comment );
         $stmt->execute();
         if ($stmt->affected_rows != 1) {
