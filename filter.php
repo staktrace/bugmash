@@ -179,8 +179,8 @@ function parseChangeTable( $fields, $rows ) {
         if (strpos( $fields[ $ixField ], $col1 ) === 0) {
             $matchedStart = true;
             if ($ixField > 0) {
-                $oldvals[] = $oldval;
-                $newvals[] = $newval;
+                $oldvals[] = trim( $oldval );
+                $newvals[] = trim( $newval );
             }
             $oldval = $col2;
             $newval = $col3;
@@ -193,8 +193,8 @@ function parseChangeTable( $fields, $rows ) {
             $ixField++;
         }
     }
-    $oldvals[] = $oldval;
-    $newvals[] = $newval;
+    $oldvals[] = trim( $oldval );
+    $newvals[] = trim( $newval );
     if ($ixField != count( $fields )) {
         fail( 'Unable to parse change table; using field list: ' . print_r( $fields, true ) . ' and data ' . print_r( $rows, true ) );
     } else if (count( $fields ) != count( $oldvals )) {
