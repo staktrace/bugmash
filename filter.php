@@ -218,9 +218,21 @@ function prepare( $query ) {
     return $stmt;
 }
 
+function updateTitle() {
+    $matches = array();
+    if (preg_match( '/\[Bug (\d+)\] (.*)/s', getField( 'subject' ), $matches ) > 0) {
+        $stmt = prepare( 'INSERT INTO metadata (bug, title) VALUES (?, ?) ON DUPLICATE KEY UPDATE title=VALUES(title)' );
+        $stmt->bind_param( 'is', $matches[1], $matches[2] );
+        $stmt->execute();
+    }
+}
+
+updateTitle();
+
 $bug = getField( 'id' );
 $type = getField( 'type' );
 $date = date( 'Y-m-d H:i:s', getField( 'date' ) );
+
 if ($type == 'request') {
     $matches = array();
 
