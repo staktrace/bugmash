@@ -35,7 +35,8 @@ function fail( $message ) {
 }
 
 function success() {
-    global $_DB;
+    global $filename, $mailString, $_DB;
+    file_put_contents( dirname( $_SERVER['PHP_SELF'] ) . '/old/' . $filename, $mailString );
     if ($_DB) {
         $_DB->close();
     }
