@@ -191,10 +191,12 @@ while ($row = $result->fetch_assoc()) {
     if (strpos( $row['comment'], "Review of attachment" ) !== FALSE) {
         $matches = array();
         if (preg_match( "/^Comment on attachment (\d+)\n  -->.*\n.*\n\nReview of attachment \d+:\n -->.*\n--*-\n\n/", $row['comment'], $matches ) > 0) {
-            foreach ($filterComments[ $matches[1] ] AS $filterComment) {
-                if (strpos( $row['comment'], $filterComment ) !== FALSE) {
-                    $hide = true;
-                    break;
+            if (isset( $filterComments[ $matches[1] ] )) {
+                foreach ($filterComments[ $matches[1] ] AS $filterComment) {
+                    if (strpos( $row['comment'], $filterComment ) !== FALSE) {
+                        $hide = true;
+                        break;
+                    }
                 }
             }
         }
