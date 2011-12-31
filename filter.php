@@ -246,8 +246,8 @@ if ($type == 'request') {
     }
     $title = $matches[1];
 
+    $subject = getField( 'subject' );
     if (! checkForField( 'flag-requestee' )) {
-        $subject = getField( 'subject' );
         if (strpos( $subject, ' canceled: [Bug' ) !== FALSE) {
             $granted = 0;
             $cancelled = 1;
@@ -287,7 +287,7 @@ if ($type == 'request') {
             fail( 'Requestee is not me' );
         }
         $flag = substr( $subject, 0, strpos( $subject, ' ' ) );
-        if (strpos( getField( 'subject' ), "$flag requested" ) !== 0) {
+        if (strpos( $subject, "$flag requested" ) !== 0) {
             fail( 'Unknown request type' );
         }
 
