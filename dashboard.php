@@ -146,7 +146,7 @@ $result = loadTable( 'newbugs' );
 while ($row = $result->fetch_assoc()) {
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="n%d">New: <a href="%s/show_bug.cgi?id=%d">%s</a></div><div class="desc">%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="n%d">New: <a href="%s/show_bug.cgi?id=%d">%s</a><br/>%s</div>',
                                                 $row['id'],
                                                 $_BASE_URL,
                                                 $row['bug'],
