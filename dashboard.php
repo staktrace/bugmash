@@ -218,7 +218,12 @@ while ($row = $result->fetch_assoc()) {
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $block = sprintf( '<div class="bug" id="bug%d"><div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s <a class="wipe" href="#">X</a></div>%s</div>',
+    $block = sprintf( '<div class="bug" id="bug%d"><div class="title">'
+                    . '<a class="wipe" href="#">X</a>'
+                    . '<a class="noteify" href="#" onclick="return noteify(%d)">N</a>'
+                    . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
+                    . '</div>%s</div>',
+                      $bug,
                       $bug,
                       $_BASE_URL,
                       $bug,
@@ -274,6 +279,13 @@ div.title {
 }
 a.wipe {
     float: right;
+    margin-left: 3px;
+    vertical-align: top;
+}
+a.noteify {
+    float: right;
+    margin-left: 3px;
+    vertical-align: top;
 }
 .noteinput {
     width: 80%;
@@ -319,12 +331,17 @@ a.wipe {
         }
     }, true );
 
-    function addNote() {
+    function addNote( bugnumber ) {
         var notediv = document.createElement( "div" );
         notediv.className = "newnote";
         var sibling = document.getElementById( "notebuttons" );
         sibling.parentNode.insertBefore( notediv, sibling );
-        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10"/></span>: <input class="noteinput" type="text"/><br/>';
+        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10" value="' + bugnumber + '"/></span>: <input class="noteinput" type="text"/><br/>';
+        if (bugnumber) {
+            notediv.getElementsByTagName( "input" )[1].focus();
+        } else {
+            notediv.getElementsByTagName( "input" )[0].focus();
+        }
     }
 
     function setNoteNames() {
@@ -349,6 +366,26 @@ a.wipe {
         }
         return true;
     }
+
+    function noteify( bugnumber ) {
+        var notes = document.getElementsByClassName( "note" );
+        var search = "Bug " + bugnumber;
+        for (var i = 0; i < notes.length; i++) {
+            if (notes[i].firstChild.textContent == search) {
+                notes[i].getElementsByTagName( "input" )[0].focus();
+                return false;
+            }
+        }
+        notes = document.getElementsByClassName( "newnote" );
+        for (var i = 0; i < notes.length; i++) {
+            if (notes[i].getElementsByTagName( "input" )[0].value == bugnumber) {
+                notes[i].getElementsByTagName( "input" )[1].focus();
+                return false;
+            }
+        }
+        addNote( bugnumber );
+        return false;
+    }
   </script>
  </head>
  <body>
@@ -367,7 +404,7 @@ foreach ($meta_notes AS $bug => $note) {
         "\n";
 }
 echo '    <div id="notebuttons">', "\n";
-echo '     <input type="button" value="Add note" onclick="addNote()"/>', "\n";
+echo '     <input type="button" value="Add note" onclick="addNote(\'\')"/>', "\n";
 echo '     <input type="submit" id="savenotes" value="Save notes"/>', "\n";
 echo '    </div>', "\n";
 echo '   </fieldset>', "\n";
