@@ -203,6 +203,50 @@ function parseChangeTable( $fields, $rows ) {
     return array( $fields, $oldvals, $newvals );
 }
 
+function saveChanges( $bug, $date, $reason, &$mailString ) {
+    $fields = normalizeFieldList( getField( 'changed-fields' ) );
+    if (count( $fields ) == 0) {
+        return;
+    }
+
+    $matches = array();
+    $matchCount = preg_match_all( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER );
+    if ($matchCount == 0) {
+        fail( 'No change table' );
+    }
+    $tableRows = $matches[1][0];
+    for ($i = 1; $i < $matchCount; $i++) {
+        // append subsequent tables without header row
+        $tableRows .= substr( $matches[1][$i], strpos( $matches[1][$i], "\n" ) );
+    }
+    list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $tableRows ) );
+
+    $stmt = prepare( 'INSERT INTO changes (bug, stamp, reason, field, oldval, newval) VALUES (?, ?, ?, ?, ?, ?)' );
+    for ($i = 0; $i < count( $fields ); $i++) {
+        $stmt->bind_param( 'isssss', $bug, $date, $reason, $fields[$i], $oldvals[$i], $newvals[$i] );
+        $stmt->execute();
+        if ($stmt->affected_rows != 1) {
+            fail( 'Unable to insert field change into DB: ' . $stmt->error );
+        }
+    }
+}
+
+function saveComments( $bug, $date, $reason, &$mailString ) {
+    $matches = array();
+    $matchCount = preg_match_all( "/- Comment #(\d+) from ([^<]*) <[^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches, PREG_PATTERN_ORDER );
+    $stmt = prepare( 'INSERT INTO comments (bug, stamp, reason, commentnum, author, comment) VALUES (?, ?, ?, ?, ?, ?)' );
+    for ($i = 0; $i < $matchCount; $i++) {
+        $commentNum = $matches[1][$i];
+        $author = $matches[2][$i];
+        $comment = $matches[3][$i];
+        $stmt->bind_param( 'ississ', $bug, $date, $reason, $commentNum, $author, $comment );
+        $stmt->execute();
+        if ($stmt->affected_rows != 1) {
+            fail( 'Unable to insert new comment into DB: ' . $stmt->error );
+        }
+    }
+}
+
 function prepare( $query ) {
     global $_DB, $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB;
     if (is_null( $_DB )) {
@@ -321,44 +365,10 @@ if ($type == 'request') {
     success();
 } else if ($type == 'changed') {
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
-    $fields = normalizeFieldList( getField( 'changed-fields' ) );
 
-    if (count( $fields ) > 0) {
-        $matches = array();
-        $matchCount = preg_match_all( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER );
-        if ($matchCount == 0) {
-            fail( 'No change table' );
-        }
-        $tableRows = $matches[1][0];
-        for ($i = 1; $i < $matchCount; $i++) {
-            // append subsequent tables without header row
-            $tableRows .= substr( $matches[1][$i], strpos( $matches[1][$i], "\n" ) );
-        }
-        list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $tableRows ) );
+    saveChanges( $bug, $date, $reason, $mailString );
+    saveComments( $bug, $date, $reason, $mailString );
 
-        $stmt = prepare( 'INSERT INTO changes (bug, stamp, reason, field, oldval, newval) VALUES (?, ?, ?, ?, ?, ?)' );
-        for ($i = 0; $i < count( $fields ); $i++) {
-            $stmt->bind_param( 'isssss', $bug, $date, $reason, $fields[$i], $oldvals[$i], $newvals[$i] );
-            $stmt->execute();
-            if ($stmt->affected_rows != 1) {
-                fail( 'Unable to insert field change into DB: ' . $stmt->error );
-            }
-        }
-    }
-
-    $matches = array();
-    $matchCount = preg_match_all( "/- Comment #(\d+) from ([^<]*) <[^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches, PREG_PATTERN_ORDER );
-    $stmt = prepare( 'INSERT INTO comments (bug, stamp, reason, commentnum, author, comment) VALUES (?, ?, ?, ?, ?, ?)' );
-    for ($i = 0; $i < $matchCount; $i++) {
-        $commentNum = $matches[1][$i];
-        $author = $matches[2][$i];
-        $comment = $matches[3][$i];
-        $stmt->bind_param( 'ississ', $bug, $date, $reason, $commentNum, $author, $comment );
-        $stmt->execute();
-        if ($stmt->affected_rows != 1) {
-            fail( 'Unable to insert new comment into DB: ' . $stmt->error );
-        }
-    }
     success();
 } else {
     fail( 'Unknown type' );
