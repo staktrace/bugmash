@@ -204,20 +204,23 @@ function parseChangeTable( $fields, $rows ) {
 }
 
 function saveChanges( $bug, $date, $reason, &$mailString ) {
+    $ret = 0;
     $fields = normalizeFieldList( getField( 'changed-fields' ) );
     if (count( $fields ) == 0) {
-        return;
+        return $ret;
     }
 
     $matches = array();
-    $matchCount = preg_match_all( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER );
+    $matchCount = preg_match_all( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE );
     if ($matchCount == 0) {
         fail( 'No change table' );
     }
-    $tableRows = $matches[1][0];
+    $tableRows = $matches[1][0][0];
+    $ret = max( $ret, $matches[0][0][1] + strlen( $matches[0][0][0] ) );
     for ($i = 1; $i < $matchCount; $i++) {
         // append subsequent tables without header row
-        $tableRows .= substr( $matches[1][$i], strpos( $matches[1][$i], "\n" ) );
+        $tableRows .= substr( $matches[1][$i][0], strpos( $matches[1][$i][0], "\n" ) );
+        $ret = max( $ret, $matches[0][$i][1] + strlen( $matches[0][$i][0] ) );
     }
     list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $tableRows ) );
 
@@ -229,6 +232,8 @@ function saveChanges( $bug, $date, $reason, &$mailString ) {
             fail( 'Unable to insert field change into DB: ' . $stmt->error );
         }
     }
+
+    return $ret;
 }
 
 function saveComments( $bug, $date, $reason, &$mailString ) {
@@ -356,6 +361,10 @@ if ($type == 'request') {
         fail( 'No description' );
     }
     $desc = trim( $matches[1] );
+
+    $extracted = saveChanges( $bug, $date, $reason, $desc );
+    $desc = trim( substr( $desc, $extracted ) );
+
     $stmt = prepare( 'INSERT INTO newbugs (bug, stamp, reason, title, author, description) VALUES (?, ?, ?, ?, ?, ?)' );
     $stmt->bind_param( 'isssss', $bug, $date, $reason, $title, $author, $desc );
     $stmt->execute();
