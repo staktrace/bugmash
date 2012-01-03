@@ -84,3 +84,12 @@ CREATE TABLE `metadata` (
     PRIMARY KEY (`id`),
     UNIQUE KEY (`bug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tags` (
+    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `bug` int(10) unsigned NOT NULL,
+    `tag` varchar(255) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY (`bug`),
+    KEY (`tag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
