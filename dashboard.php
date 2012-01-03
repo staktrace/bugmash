@@ -29,7 +29,7 @@ foreach ($_POST AS $key => $value) {
 $meta_titles = array();
 $meta_notes = array();
 
-$result = $_DB->query( "SELECT * FROM metadata" );
+$result = $_DB->query( "SELECT * FROM metadata ORDER BY id ASC" );
 if (! $result) {
     fail( "Unable to load metadata" );
 }
