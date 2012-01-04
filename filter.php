@@ -257,6 +257,38 @@ function saveComments( $bug, $date, $reason, &$mailString ) {
     }
 }
 
+function saveDependencyChanges( $bug, $date, $reason, &$mailString ) {
+    $matches = array();
+    if (preg_match( '/Bug (\d+) depends on bug (\d+), which changed state./', $mailString, $matches ) == 0) {
+        return false;
+    }
+    if (strcmp( $bug, $matches[1] ) != 0) {
+        fail( 'Dependency email did not match bug number' );
+    }
+    $dependentBug = $matches[2];
+
+    // in this case we don't know the list of field names ahead of time, just that it will be one or more Status
+    // and Resolution fields. Since these won't line wrap, we can just do a simpler version of parseChangeTable
+    $matches = array();
+    $matchCount = preg_match_all( "/\n *What *\|Old Value *\|New Value\n-*\n(.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER );
+    if ($matchCount != 1) {
+        fail( 'Found ' . $matchCount . ' change tables in a dependency change email' );
+    }
+    $tableRows = explode( "\n", $matches[1][0] );
+    $fields = array();
+    $oldvals = array();
+    $newvals = array();
+    foreach ($tableRows AS $row) {
+        list( $field, $oldval, $newval ) = explode( '|', $row );
+        $fields[] = 'depbug-' . $dependentBug . '-' . trim( $field );
+        $oldvals[] = trim( $oldval );
+        $newvals[] = trim( $newval );
+    }
+    insertChanges( $bug, $date, $reason, $fields, $oldvals, $newvals );
+
+    return true;
+}
+
 function prepare( $query ) {
     global $_DB, $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB;
     if (is_null( $_DB )) {
@@ -380,8 +412,13 @@ if ($type == 'request') {
 } else if ($type == 'changed') {
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
 
-    saveChanges( $bug, $date, $reason, $mailString );
-    saveComments( $bug, $date, $reason, $mailString );
+    if (saveChanges( $bug, $date, $reason, $mailString ) > 0) {
+        saveComments( $bug, $date, $reason, $mailString );
+    } else {
+        if (! saveDependencyChanges( $bug, $date, $reason, $mailString )) {
+            fail( 'No changes found in a type:changed bugmail' );
+        }
+    }
 
     success();
 } else {
