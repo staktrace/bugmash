@@ -8,26 +8,50 @@ if (mysqli_connect_errno()) {
 }
 
 //
-// handle note updates
+// handle note and tag updates
 //
 
 $stmt = $_DB->prepare( 'INSERT INTO metadata (bug, note) VALUES (?, ?) ON DUPLICATE KEY UPDATE note=VALUES(note)' );
-if ($_DB->errno) {
-    fail( 'Error preparing statement: ' . $_DB->error );
-}
+if ($_DB->errno) fail( 'Error preparing metadata insert: ' . $_DB->error );
 foreach ($_POST AS $key => $value) {
     if (strncmp( $key, 'note', 4 ) == 0) {
         $stmt->bind_param( 'is', intval( substr( $key, 4 ) ), trim( $value ) );
         $stmt->execute();
     }
 }
+$stmt->close();
+$stmt = $_DB->prepare( 'DELETE FROM tags WHERE bug=?' );
+if ($_DB->errno) fail( 'Error preparing tag deletion: ' . $_DB->error );
+foreach ($_POST AS $key => $value) {
+    if (strncmp( $key, 'tags', 4 ) == 0) {
+        $stmt->bind_param( 'i', intval( substr( $key, 4 ) ) );
+        $stmt->execute();
+    }
+}
+$stmt->close();
+$stmt = $_DB->prepare( 'INSERT INTO tags (bug, tag) VALUES (?, ?)' );
+if ($_DB->errno) fail( 'Error preparing tag insertion: ' . $_DB->error );
+foreach ($_POST AS $key => $value) {
+    if (strncmp( $key, 'tags', 4 ) == 0) {
+        $bug = intval( substr( $key, 4 ) );
+        foreach (explode( ',', $value ) AS $tag) {
+            $tag = trim( $tag );
+            if (strlen( $tag ) > 0) {
+                $stmt->bind_param( 'is', $bug, $tag );
+                $stmt->execute();
+            }
+        }
+    }
+}
+$stmt->close();
 
 //
-// read metadata
+// read metadata and tags
 //
 
 $meta_titles = array();
 $meta_notes = array();
+$meta_tags = array();
 
 $result = $_DB->query( "SELECT * FROM metadata ORDER BY id ASC" );
 if (! $result) {
@@ -40,6 +64,13 @@ while ($row = $result->fetch_assoc()) {
     if (strlen( $row['note'] ) > 0) {
         $meta_notes[ $row['bug'] ] = $row['note'];
     }
+}
+$result = $_DB->query( "SELECT bug, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS taglist FROM tags GROUP BY bug ORDER BY id ASC" );
+if (! $result) {
+    fail( "Unable to load tags" );
+}
+while ($row = $result->fetch_assoc()) {
+    $meta_tags[ $row['bug'] ] = $row['taglist'];
 }
 
 //
@@ -338,7 +369,7 @@ a.noteify {
         notediv.className = "newnote";
         var sibling = document.getElementById( "notebuttons" );
         sibling.parentNode.insertBefore( notediv, sibling );
-        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10" value="' + bugnumber + '"/></span>: <input class="noteinput" type="text"/><br/>';
+        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10" value="' + bugnumber + '"/></span>: <input class="noteinput" type="text"/><input class="tagsinput" type="text""/><br/>';
         if (bugnumber) {
             notediv.getElementsByTagName( "input" )[1].focus();
         } else {
@@ -364,6 +395,7 @@ a.noteify {
             anchor.textContent = "Bug " + bugnumber;
             newnote.replaceChild( anchor, newnote.getElementsByTagName( "span" )[0] );
             newnote.getElementsByTagName( "input" )[0].setAttribute( "name", "note" + bugnumber );
+            newnote.getElementsByTagName( "input" )[1].setAttribute( "name", "tags" + bugnumber );
             newnote.className = "note";
         }
         return true;
@@ -371,6 +403,7 @@ a.noteify {
 
     function noteify( bugnumber ) {
         var notes = document.getElementsByClassName( "note" );
+        // see if we can find a note already for this bug and just give it focus
         var search = "Bug " + bugnumber;
         for (var i = 0; i < notes.length; i++) {
             if (notes[i].firstChild.textContent == search) {
@@ -378,6 +411,7 @@ a.noteify {
                 return false;
             }
         }
+        // also search through the newly-added notes that are in a different format
         notes = document.getElementsByClassName( "newnote" );
         for (var i = 0; i < notes.length; i++) {
             if (notes[i].getElementsByTagName( "input" )[0].value == bugnumber) {
@@ -385,6 +419,7 @@ a.noteify {
                 return false;
             }
         }
+        // couldn't find it, so add a new one
         addNote( bugnumber );
         return false;
     }
@@ -395,13 +430,19 @@ a.noteify {
 echo '  <form onsubmit="return setNoteNames()" method="POST" target="_self">', "\n";
 echo '   <fieldset>', "\n";
 echo '    <legend>Bug notes</legend>', "\n";
-foreach ($meta_notes AS $bug => $note) {
-    echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: <input class="noteinput" type="text" name="note%d" value="%s"/><br/>%s</div>',
+$buglist = array_unique( array_merge( array_keys( $meta_notes ), array_keys( $meta_tags ) ) );
+foreach ($buglist AS $bug) {
+    echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: '
+                . '<input class="noteinput" type="text" name="note%d" value="%s"/>'
+                . '<input class="tagsinput" type="text" name="tags%d" value="%s"/>'
+                . '<br/>%s</div>',
                   $_BASE_URL,
                   $bug,
                   $bug,
                   $bug,
-                  escapeHTML( $note ),
+                  escapeHTML( $meta_notes[ $bug ] ),
+                  $bug,
+                  escapeHTML( $meta_tags[ $bug ] ),
                   escapeHTML( $meta_titles[ $bug ] ) ),
         "\n";
 }
