@@ -57,7 +57,13 @@ function insertBugTags(user, bugnumbers) {
                 var bugnumber = row.id.substring( 1 );
                 if (response[ bugnumber ]) {
                     var cell = row.cells[ row.cells.length - 1 ];
-                    cell.innerHTML = '<span style="font-size: smaller; color: blue">' + response[ bugnumber ].join( "," ) + '</span>' + cell.innerHTML;
+                    var tags = response[ bugnumber ].join( ", " );
+                    var color = 'blue';
+                    if (tags.charAt( 0 ) == '!') {
+                        tags = tags.substring( 1 );
+                        color = 'red';
+                    }
+                    cell.innerHTML = '<span style="font-size: smaller; color: ' + color + '">' + tags + '</span>' + cell.innerHTML;
                 }
             }
         }
