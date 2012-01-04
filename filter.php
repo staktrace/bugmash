@@ -412,13 +412,10 @@ if ($type == 'request') {
 } else if ($type == 'changed') {
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
 
-    if (saveChanges( $bug, $date, $reason, $mailString ) > 0) {
-        saveComments( $bug, $date, $reason, $mailString );
-    } else {
-        if (! saveDependencyChanges( $bug, $date, $reason, $mailString )) {
-            fail( 'No changes found in a type:changed bugmail' );
-        }
+    if (saveChanges( $bug, $date, $reason, $mailString ) == 0) {
+        saveDependencyChanges( $bug, $date, $reason, $mailString );
     }
+    saveComments( $bug, $date, $reason, $mailString );
 
     success();
 } else {
