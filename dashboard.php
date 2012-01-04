@@ -65,7 +65,7 @@ while ($row = $result->fetch_assoc()) {
         $meta_notes[ $row['bug'] ] = $row['note'];
     }
 }
-$result = $_DB->query( "SELECT bug, GROUP_CONCAT(tag ORDER BY tag SEPARATOR ', ') AS taglist FROM tags GROUP BY bug ORDER BY id ASC" );
+$result = $_DB->query( "SELECT bug, GROUP_CONCAT(tag ORDER BY id SEPARATOR ', ') AS taglist FROM tags GROUP BY bug ORDER BY id ASC" );
 if (! $result) {
     fail( "Unable to load tags" );
 }
