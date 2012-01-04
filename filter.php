@@ -205,6 +205,17 @@ function parseChangeTable( $fields, $rows ) {
     return array( $fields, $oldvals, $newvals );
 }
 
+function insertChanges( $bug, $date, $reason, &$fields, &$oldvals, &$newvals ) {
+    $stmt = prepare( 'INSERT INTO changes (bug, stamp, reason, field, oldval, newval) VALUES (?, ?, ?, ?, ?, ?)' );
+    for ($i = 0; $i < count( $fields ); $i++) {
+        $stmt->bind_param( 'isssss', $bug, $date, $reason, $fields[$i], $oldvals[$i], $newvals[$i] );
+        $stmt->execute();
+        if ($stmt->affected_rows != 1) {
+            fail( 'Unable to insert field change into DB: ' . $stmt->error );
+        }
+    }
+}
+
 function saveChanges( $bug, $date, $reason, &$mailString ) {
     $ret = 0;
     $fields = normalizeFieldList( getField( 'changed-fields' ) );
@@ -225,15 +236,7 @@ function saveChanges( $bug, $date, $reason, &$mailString ) {
         $ret = max( $ret, $matches[0][$i][1] + strlen( $matches[0][$i][0] ) );
     }
     list( $fields, $oldvals, $newvals ) = parseChangeTable( $fields, explode( "\n", $tableRows ) );
-
-    $stmt = prepare( 'INSERT INTO changes (bug, stamp, reason, field, oldval, newval) VALUES (?, ?, ?, ?, ?, ?)' );
-    for ($i = 0; $i < count( $fields ); $i++) {
-        $stmt->bind_param( 'isssss', $bug, $date, $reason, $fields[$i], $oldvals[$i], $newvals[$i] );
-        $stmt->execute();
-        if ($stmt->affected_rows != 1) {
-            fail( 'Unable to insert field change into DB: ' . $stmt->error );
-        }
-    }
+    insertChanges( $bug, $date, $reason, $fields, $oldvals, $newvals );
 
     return $ret;
 }
