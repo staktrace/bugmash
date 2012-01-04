@@ -92,6 +92,8 @@ function column( &$reasons ) {
         return 1;
     } else if (array_search( 'CC', $reasons ) !== FALSE) {
         return 2;
+    } else if (array_search( 'Voter', $reasons ) !== FALSE) {
+        return 2;
     } else if (array_search( 'Watch', $reasons ) !== FALSE) {
         return 3;
     } else {

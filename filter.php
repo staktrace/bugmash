@@ -111,6 +111,8 @@ function normalizeReason( $reason, $watchReason ) {
         return 'Reporter';
     } else if (stripos( $reason, 'CC' ) !== FALSE) {
         return 'CC';
+    } else if (stripos( $reason, 'Voter' ) !== FALSE) {
+        return 'Voter';
     } else if (stripos( $reason, 'None' ) !== FALSE) {
         if (strlen( $watchReason ) > 0) {
             return 'Watch';
