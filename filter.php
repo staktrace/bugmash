@@ -36,7 +36,9 @@ function fail( $message ) {
 
 function success() {
     global $filename, $mailString, $_DB;
-    file_put_contents( dirname( $_SERVER['PHP_SELF'] ) . '/old/' . $filename, $mailString );
+    // uncomment if you want to save successfully processed bugmails. make sure there
+    // is an "old" folder in the same directory as this file.
+    //file_put_contents( dirname( $_SERVER['PHP_SELF'] ) . '/old/' . $filename, $mailString );
     if ($_DB) {
         $_DB->close();
     }
