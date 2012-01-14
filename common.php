@@ -21,4 +21,29 @@ function fail( $message ) {
 $BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash';
 include_once( $BUGMASH_DIR . '/bugmash.config.php' );
 
+function updateTags( $newTags ) {
+    global $_DB;
+
+    $stmt = $_DB->prepare( 'DELETE FROM tags WHERE bug=?' );
+    if ($_DB->errno) fail( 'Error preparing tag deletion: ' . $_DB->error );
+    foreach ($newTags AS $bug => $tagList) {
+        $stmt->bind_param( 'i', $bug );
+        $stmt->execute();
+    }
+    $stmt->close();
+
+    $stmt = $_DB->prepare( 'INSERT INTO tags (bug, tag) VALUES (?, ?)' );
+    if ($_DB->errno) fail( 'Error preparing tag insertion: ' . $_DB->error );
+    foreach ($newTags AS $bug => $tagList) {
+        foreach (explode( ',', $tagList ) AS $tag) {
+            $tag = trim( $tag );
+            if (strlen( $tag ) > 0) {
+                $stmt->bind_param( 'is', $bug, $tag );
+                $stmt->execute();
+            }
+        }
+    }
+    $stmt->close();
+}
+
 ?>

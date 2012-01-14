@@ -20,30 +20,14 @@ foreach ($_POST AS $key => $value) {
     }
 }
 $stmt->close();
-$stmt = $_DB->prepare( 'DELETE FROM tags WHERE bug=?' );
-if ($_DB->errno) fail( 'Error preparing tag deletion: ' . $_DB->error );
+
+$tagUpdates = array();
 foreach ($_POST AS $key => $value) {
     if (strncmp( $key, 'tags', 4 ) == 0) {
-        $stmt->bind_param( 'i', intval( substr( $key, 4 ) ) );
-        $stmt->execute();
+        $tagUpdates[ intval( substr( $key, 4 ) ) ] = $value;
     }
 }
-$stmt->close();
-$stmt = $_DB->prepare( 'INSERT INTO tags (bug, tag) VALUES (?, ?)' );
-if ($_DB->errno) fail( 'Error preparing tag insertion: ' . $_DB->error );
-foreach ($_POST AS $key => $value) {
-    if (strncmp( $key, 'tags', 4 ) == 0) {
-        $bug = intval( substr( $key, 4 ) );
-        foreach (explode( ',', $value ) AS $tag) {
-            $tag = trim( $tag );
-            if (strlen( $tag ) > 0) {
-                $stmt->bind_param( 'is', $bug, $tag );
-                $stmt->execute();
-            }
-        }
-    }
-}
-$stmt->close();
+updateTags( $tagUpdates );
 
 //
 // read metadata and tags
