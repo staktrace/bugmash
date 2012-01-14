@@ -39,7 +39,7 @@ function getBugNumbers() {
     return bugnumbers;
 }
 
-function insertBugTags(user, bugnumbers) {
+function insertBugTags( user, bugnumbers ) {
     var reqData = new FormData();
     reqData.append( "user", user );
     reqData.append( "action", "get" );
