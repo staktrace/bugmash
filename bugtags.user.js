@@ -63,9 +63,48 @@ function insertBugTags( user, bugnumbers ) {
                         tags = tags.substring( 1 );
                         color = 'red';
                     }
-                    cell.innerHTML = '<span style="font-size: smaller; color: ' + color + '">' + tags + '</span>' + cell.innerHTML;
+                    cell.innerHTML = '<a id="bugmash' + bugnumber + '" href="#" onclick="return updateBugTag(this)" style="font-size: smaller; color: ' + color + '">' + tags + '</a>' + cell.innerHTML;
                 }
             }
+        }
+    });
+}
+
+function updateBugTag( bugtag ) {
+    var bugnumber = bugtag.id.substring( 7 ); // strip "bugmash"
+    var tags = bugtag.textContent;
+    var origColor = bugtag.style.color;
+    if (origColor == 'red') {
+        tags = '!' + tags;
+    }
+    tags = prompt( "Enter new tags:", tags );
+    if (tags == null) {
+        return false;
+    }
+
+    bugtag.style.color = 'yellow';
+
+    var reqData = new FormData();
+    reqData.append( "user", user );
+    reqData.append( "action", "set" );
+    reqData.append( "bugs", bugnumber );
+    reqData.append( "tags", tags );
+
+    GM_xmlhttpRequest({
+        method: "POST",
+        url: "https://staktrace.com/apps/bugmash/tags.php",
+        data: reqData,
+        onload: function() {
+            var color = 'blue';
+            if (tags.charAt( 0 ) == '!') {
+                tags = tags.substring( 1 );
+                color = 'red';
+            }
+            bugtag.textContent = tags;
+            bugtag.style.color = color;
+        },
+        onerror: function() {
+            bugtag.style.color = origColor;
         }
     });
 }

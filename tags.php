@@ -34,6 +34,17 @@ if (strcmp( $_POST['action'], 'get' ) == 0) {
     }
     header( 'Content-Type: application/json' );
     print json_encode( $tags );
+} else if (strcmp( $_POST['action'], 'set' ) == 0) {
+    if (! isset( $_POST['tags'] )) {
+        fail( 'Required parameter tags not set' );
+    }
+    $tagUpdates = array();
+    foreach ($bugs AS $bug) {
+        $tagUpdates[ $bug ] = $_POST['tags'];
+    }
+    updateTags( $tagUpdates );
+    header( 'Content-Type: text/plain' );
+    print 'OK';
 } else {
     fail( 'Unknown action: ' . $_POST['action'] );
 }
