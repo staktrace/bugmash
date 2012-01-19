@@ -63,14 +63,24 @@ function insertBugTags( user, bugnumbers ) {
                         tags = tags.substring( 1 );
                         color = 'red';
                     }
-                    cell.innerHTML = '<a id="bugmash' + bugnumber + '" href="#" onclick="return updateBugTag(this)" style="font-size: smaller; color: ' + color + '">' + tags + '</a>' + cell.innerHTML;
+                    var tag = document.createElement( 'a' );
+                    tag.id = 'bugmash' + bugnumber;
+                    tag.href = '#';
+                    tag.style.fontSize = 'smaller';
+                    tag.style.color = color;
+                    tag.textContent = tags;
+                    tag.addEventListener( 'click', updateBugTag, false );
+                    cell.insertBefore( tag, cell.firstChild );
                 }
             }
         }
     });
 }
 
-function updateBugTag( bugtag ) {
+function updateBugTag( e ) {
+    e.preventDefault();
+
+    var bugtag = e.target;
     var bugnumber = bugtag.id.substring( 7 ); // strip "bugmash"
     var tags = bugtag.textContent;
     var origColor = bugtag.style.color;
