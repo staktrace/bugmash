@@ -239,14 +239,18 @@ foreach ($bblocks AS $bug => &$block) {
                     . '<a class="wipe" href="#">X</a>'
                     . '<a class="noteify" href="#" onclick="return noteify(%d)">N</a>'
                     . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
-                    . '</div>%s</div>',
+                    . '</div>'
+                    . '<div>%s</div>'
+                    . '<div class="footer"><a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a></div>'
+                    . '</div>',
                       $bug,
                       $bug,
                       $_BASE_URL,
                       $bug,
                       $bug,
                       escapeHTML( $meta_titles[ $bug ] ),
-                      implode( "\n", $block ) ) . "\n";
+                      implode( "\n", $block ),
+                      $bug ) . "\n";
     $columns[ column( $reasons[ $bug ] ) ][ $touchTime ] .= $block;
 }
 $_DB->close();
@@ -303,6 +307,10 @@ a.noteify {
     float: right;
     margin-left: 3px;
     vertical-align: top;
+}
+div.footer {
+    background-color: lightblue;
+    margin-top: 2px;
 }
 .noteinput {
     width: 80%;
