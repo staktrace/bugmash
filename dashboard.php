@@ -221,8 +221,8 @@ while ($row = $result->fetch_assoc()) {
 
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
-                                                ($hide ? ' style="display: none"' : ''),
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="%s" id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
+                                                ($hide ? 'display: none' : 'white-space: pre-line'),
                                                 $row['id'],
                                                 escapeHTML( $row['author'] ),
                                                 $_BASE_URL,
