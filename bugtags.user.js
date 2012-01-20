@@ -55,23 +55,24 @@ function insertBugTags( user, bugnumbers ) {
             for (var i = 0; i < rows.length; i++) {
                 var row = rows[i];
                 var bugnumber = row.id.substring( 1 );
+                var cell = row.cells[ row.cells.length - 1 ];
+                var color = 'blue';
+                var tags = '+';
                 if (response[ bugnumber ]) {
-                    var cell = row.cells[ row.cells.length - 1 ];
-                    var tags = response[ bugnumber ].join( ", " );
-                    var color = 'blue';
+                    tags = response[ bugnumber ].join( ", " );
                     if (tags.charAt( 0 ) == '!') {
                         tags = tags.substring( 1 );
                         color = 'red';
                     }
-                    var tag = document.createElement( 'a' );
-                    tag.id = 'bugmash' + bugnumber;
-                    tag.href = '#';
-                    tag.style.fontSize = 'smaller';
-                    tag.style.color = color;
-                    tag.textContent = tags;
-                    tag.addEventListener( 'click', updateBugTag, false );
-                    cell.insertBefore( tag, cell.firstChild );
                 }
+                var tag = document.createElement( 'a' );
+                tag.id = 'bugmash' + bugnumber;
+                tag.href = '#';
+                tag.style.fontSize = 'smaller';
+                tag.style.color = color;
+                tag.textContent = tags;
+                tag.addEventListener( 'click', updateBugTag, false );
+                cell.insertBefore( tag, cell.firstChild );
             }
         }
     });
@@ -83,6 +84,9 @@ function updateBugTag( e ) {
     var bugtag = e.target;
     var bugnumber = bugtag.id.substring( 7 ); // strip "bugmash"
     var tags = bugtag.textContent;
+    if (tags == '+') {
+        tags = '';
+    }
     var origColor = bugtag.style.color;
     if (origColor == 'red') {
         tags = '!' + tags;
@@ -106,11 +110,15 @@ function updateBugTag( e ) {
         data: reqData,
         onload: function() {
             var color = 'blue';
-            if (tags.charAt( 0 ) == '!') {
-                tags = tags.substring( 1 );
-                color = 'red';
+            if (tags.length > 0) {
+                if (tags.charAt( 0 ) == '!') {
+                    tags = tags.substring( 1 );
+                    color = 'red';
+                }
+                bugtag.textContent = tags;
+            } else {
+                bugtag.textContent = '+';
             }
-            bugtag.textContent = tags;
             bugtag.style.color = color;
         },
         onerror: function() {
