@@ -419,9 +419,23 @@ div.footer {
  </head>
  <body>
 <?php
-echo '  <form onsubmit="return setNoteNames()" method="POST" target="_self">', "\n";
-echo '   <fieldset>', "\n";
-echo '    <legend>Bug notes</legend>', "\n";
+for ($i = 0; $i < 4; $i++) {
+    $buglist = $columns[$i];
+    echo '  <div class="column">', "\n";
+    if (count( $buglist ) > 0) {
+        ksort( $buglist, SORT_NUMERIC );
+        foreach ($buglist AS $time => &$block) {
+            echo $block, "\n";
+        }
+    }
+    echo '   &nbsp;';   // so that after wiping all the blocks there is still space reserved
+    echo '  </div>', "\n";
+}
+?>
+  <form onsubmit="return setNoteNames()" method="POST" target="_self" style="clear: both">
+   <fieldset>
+    <legend>Bug notes</legend>
+<?php
 $buglist = array_unique( array_merge( array_keys( $meta_notes ), array_keys( $meta_tags ) ) );
 foreach ($buglist AS $bug) {
     echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: '
@@ -438,25 +452,12 @@ foreach ($buglist AS $bug) {
                   escapeHTML( $meta_titles[ $bug ] ) ),
         "\n";
 }
-echo '    <div id="notebuttons">', "\n";
-echo '     <input type="button" value="Add note" onclick="addNote(\'\')"/>', "\n";
-echo '     <input type="submit" id="savenotes" value="Save notes"/>', "\n";
-echo '    </div>', "\n";
-echo '   </fieldset>', "\n";
-echo '  </form>', "\n";
-
-for ($i = 0; $i < 4; $i++) {
-    $buglist = $columns[$i];
-    echo '  <div class="column">', "\n";
-    if (count( $buglist ) > 0) {
-        ksort( $buglist, SORT_NUMERIC );
-        foreach ($buglist AS $time => &$block) {
-            echo $block, "\n";
-        }
-    }
-    echo '   &nbsp;';   // so that after wiping all the blocks there is still space reserved
-    echo '  </div>', "\n";
-}
 ?>
+    <div id="notebuttons">
+     <input type="button" value="Add note" onclick="addNote('')"/>
+     <input type="submit" id="savenotes" value="Save notes"/>
+    </div>
+   </fieldset>
+  </form>
  </body>
 </html>
