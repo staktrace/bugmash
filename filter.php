@@ -131,13 +131,13 @@ function normalizeFieldList( $fieldString ) {
     $currentField = '';
     for ($i = 0; $i < count( $words ); $i++) {
         $word = $words[ $i ];
-        if ($word == 'Attachment' /* #abcdef (Flags|is) */) {
+        if ($word == 'Attachment' /* #abcdef (Flags|is|mime) */) {
             if ($i + 2 >= count( $words )) {
                 fail( 'Unrecognized field list (1): ' . print_r( $words, true ) );
             }
             $word .= ' ' . $words[ ++$i ];
             $word .= ' ' . $words[ ++$i ];
-            if ($words[ $i ] == 'is' /* obsolete */) {
+            if ($words[ $i ] == 'is' /* obsolete */ || $words[ $i ] == 'mime' /* type */) {
                 if ($i + 1 >= count( $words )) {
                     fail( 'Unrecognized field list (2): ' . print_r( $words, true ) );
                 }
