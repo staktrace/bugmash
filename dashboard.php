@@ -100,7 +100,7 @@ function linkify( $text, $bug ) {
     global $_BASE_URL;
     $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
     $text = preg_replace( '/(bug\s+)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=$2">$1$2</a>', $text );
-    $text = preg_replace( '/(Attachment #)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/page.cgi?id=splinter.html&bug=' . $bug . '&attachment=$2">$1$2</a>', $text );
+    $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/page.cgi?id=splinter.html&bug=' . $bug . '&attachment=$2">$1$2</a>', $text );
     return $text;
 }
 
@@ -176,7 +176,7 @@ while ($row = $result->fetch_assoc()) {
                                                 $_BASE_URL,
                                                 $row['bug'],
                                                 escapeHTML( $row['title'] ),
-                                                escapeHTML( $row['description'] ) ) . "\n";
+                                                linkify( escapeHTML( $row['description'] ), $row['bug'] ) ) . "\n";
     $reasons[ $row['bug'] ][] = $row['reason'];
 }
 
