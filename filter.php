@@ -396,7 +396,8 @@ if ($type == 'request') {
     $title = trim( $matches[1] );
     $author = getField( 'who' );
     $matches = array();
-    if (preg_match( "/Bug #: .*?\n\n\n(.*\n\n)?-- \n/s", $mailString, $matches ) == 0) {
+    // if the email is Content-Transfer-Encoding: quoted-printable the space could be =20 so check for that too
+    if (preg_match( "/Bug #: .*?\n\n\n(.*\n\n)?--( |=20)\n/s", $mailString, $matches ) == 0) {
         fail( 'No description' );
     }
     $desc = trim( $matches[1] );
