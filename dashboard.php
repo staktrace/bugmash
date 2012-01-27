@@ -96,6 +96,12 @@ function stripWhitespace( $stuff ) {
     return preg_replace( '/\s/', '', $stuff );
 }
 
+function linkify( $text, $bug ) {
+    global $_BASE_URL;
+    $text = preg_replace( '/(Attachment #)(\d+)/i', '<a href="' . $_BASE_URL . '/page.cgi?id=splinter.html&bug=' . $bug . '&attachment=$2">$1$2</a>', $text );
+    return $text;
+}
+
 function column( &$reasons ) {
     if (array_search( 'review', $reasons ) !== FALSE) {
         return 0;
@@ -195,7 +201,7 @@ while ($row = $result->fetch_assoc()) {
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="d%d">%s: %s &rarr; %s</div>',
                                                 ($hide ? ' style="display: none"' : ''),
                                                 $row['id'],
-                                                escapeHTML( $row['field'] ),
+                                                linkify( escapeHTML( $row['field'] ), $row['bug'] ),
                                                 escapeHTML( $row['oldval'] ),
                                                 escapeHTML( $row['newval'] ) ) . "\n";
     $reasons[ $row['bug'] ][] = $row['reason'];
@@ -228,7 +234,7 @@ while ($row = $result->fetch_assoc()) {
                                                 $_BASE_URL,
                                                 $row['bug'],
                                                 $row['commentnum'],
-                                                escapeHTML( $row['comment'] ) ) . "\n";
+                                                linkify( escapeHTML( $row['comment'] ), $row['bug'] ) ) . "\n";
     $reasons[ $row['bug'] ][] = $row['reason'];
 }
 
