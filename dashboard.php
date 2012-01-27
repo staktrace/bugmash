@@ -323,6 +323,13 @@ div.footer {
 .noteinput {
     width: 80%;
 }
+a.linkified {
+    color: black;
+    text-decoration: none;
+}
+a.linkified:hover {
+    text-decoration: underline;
+}
   </style>
   <script type="text/javascript">
     function wipe(e) {
