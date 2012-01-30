@@ -218,6 +218,7 @@ while ($row = $result->fetch_assoc()) {
         if (preg_match( "/^Comment on attachment (\d+)\n  -->.*\n.*\n\nReview of attachment \d+:\n -->.*\n--*-\n\n/", $row['comment'], $matches ) > 0) {
             if (isset( $filterComments[ $matches[1] ] )) {
                 foreach ($filterComments[ $matches[1] ] AS $filterComment) {
+                    // sometimes the following check doesn't work because the emails were formatted differently. stupid bugzilla
                     if (strpos( $row['comment'], $filterComment ) !== FALSE) {
                         $hide = true;
                         break;
