@@ -131,17 +131,27 @@ function normalizeFieldList( $fieldString ) {
     $currentField = '';
     for ($i = 0; $i < count( $words ); $i++) {
         $word = $words[ $i ];
-        if ($word == 'Attachment' /* #abcdef (Flags|is|mime) */) {
-            if ($i + 2 >= count( $words )) {
+        if ($word == 'Attachment' /* Created|#abcdef */) {
+            if ($i + 1 >= count( $words )) {
                 fail( 'Unrecognized field list (1): ' . print_r( $words, true ) );
             }
             $word .= ' ' . $words[ ++$i ];
-            $word .= ' ' . $words[ ++$i ];
-            if ($words[ $i ] == 'is' /* obsolete */ || $words[ $i ] == 'mime' /* type */) {
+            if ($words[ $i ] == 'Created') {
+                // ignore "Attachment Created" in the field list since it doesn't have
+                // a corresponding entry in the field table
+                continue;
+            } else {
+                /* Flags|is|mime */
                 if ($i + 1 >= count( $words )) {
                     fail( 'Unrecognized field list (2): ' . print_r( $words, true ) );
                 }
                 $word .= ' ' . $words[ ++$i ];
+                if ($words[ $i ] == 'is' /* obsolete */ || $words[ $i ] == 'mime' /* type */) {
+                    if ($i + 1 >= count( $words )) {
+                        fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
+                    }
+                    $word .= ' ' . $words[ ++$i ];
+                }
             }
         } else if ($word == 'Depends' /* On */
             || $word == 'Target' /* Milestone */
@@ -150,7 +160,7 @@ function normalizeFieldList( $fieldString ) {
             || $word == 'See' /* Also */)
         {
             if ($i + 1 >= count( $words )) {
-                fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
+                fail( 'Unrecognized field list (4): ' . print_r( $words, true ) );
             }
             $word .= ' ' . $words[ ++$i ];
         } else if ($word == 'Status') {
