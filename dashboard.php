@@ -298,7 +298,8 @@ body {
 .row {
     border-bottom: dashed 1px;
     word-wrap: break-word;  /* deprecated by css3-text, but the one that firefox picks up */
-    overflow-wrap: break-word hyphenate; /* what i really want as per css3-text */
+    overflow-wrap: break-word; /* what i can do with the lastest version of CSS3 text */
+    overflow-wrap: break-word hyphenate; /* what i really want as per old css3-text (http://www.w3.org/TR/2011/WD-css3-text-20110901/#overflow-wrap0) */
 }
 .row:last-child {
     border-bottom: none;
@@ -306,6 +307,9 @@ body {
 div.title {
     background-color: lightblue;
     margin-bottom: 2px;
+    word-wrap: break-word;  /* deprecated by css3-text, but the one that firefox picks up */
+    overflow-wrap: break-word; /* what i can do with the lastest version of CSS3 text */
+    overflow-wrap: break-word hyphenate; /* what i really want as per old css3-text (http://www.w3.org/TR/2011/WD-css3-text-20110901/#overflow-wrap0) */
 }
 a.wipe {
     float: right;
