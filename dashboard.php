@@ -326,7 +326,7 @@ div.footer {
     margin-top: 2px;
 }
 .noteinput {
-    width: 80%;
+    width: 350px;
 }
 a.linkified {
     color: black;
@@ -381,7 +381,7 @@ a.linkified:hover {
         notediv.className = "newnote";
         var sibling = document.getElementById( "notebuttons" );
         sibling.parentNode.insertBefore( notediv, sibling );
-        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10" value="' + bugnumber + '"/></span>: <input class="noteinput" type="text"/><input class="tagsinput" type="text""/><br/>';
+        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10" value="' + bugnumber + '"/></span>: <input class="noteinput" type="text"/><input class="tagsinput" type="text""/>';
         if (bugnumber) {
             notediv.getElementsByTagName( "input" )[1].focus();
         } else {
@@ -460,8 +460,8 @@ $buglist = array_unique( array_merge( array_keys( $meta_notes ), array_keys( $me
 foreach ($buglist AS $bug) {
     echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: '
                 . '<input class="noteinput" type="text" name="note%d" value="%s"/>'
-                . '<input class="tagsinput" type="text" name="tags%d" value="%s"/>'
-                . '<br/>%s</div>',
+                . '<input class="tagsinput" type="text" name="tags%d" value="%s"/> '
+                . '%s</div>',
                   $_BASE_URL,
                   $bug,
                   $bug,
