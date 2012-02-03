@@ -70,12 +70,6 @@ function loadTable( $table ) {
     return $result;
 }
 
-function escapeHTML( $stuff ) {
-    $stuff = str_replace( '&', '&amp;', $stuff );
-    $stuff = str_replace( array( '<', '>', '"' ), array( '&lt;', '&gt;', '&quot;' ), $stuff );
-    return $stuff;
-}
-
 function abbrevFlag( $flag ) {
     if ($flag == 'review') {
         return 'r';
