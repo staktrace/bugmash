@@ -474,5 +474,12 @@ foreach ($buglist AS $bug) {
     </div>
    </fieldset>
   </form>
+  <form method="POST" action="search.php">
+   <fieldset>
+    <legend>Recent bug search</legend>
+    <input type="text" name="q" />
+    <input type="submit" value="Search" />
+   </fieldset>
+  </form>
  </body>
 </html>
