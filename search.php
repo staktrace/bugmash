@@ -25,6 +25,18 @@ if (mysqli_connect_errno()) {
     fail( 'Error connecting to db: ' . mysqli_connect_error() );
 }
 
+$meta_titles = array();
+
+$result = $_DB->query( "SELECT bug,title FROM metadata ORDER BY id ASC" );
+if (! $result) {
+    fail( "Unable to load metadata" );
+}
+while ($row = $result->fetch_assoc()) {
+    if (strlen( $row['title'] ) > 0) {
+        $meta_titles[ $row['bug'] ] = $row['title'];
+    }
+}
+
 $_SEARCH_COLUMNS = array(
     'requests' => array( 'title' ),
     'reviews' => array( 'title', 'author', 'authoremail', 'comment' ),
@@ -100,9 +112,9 @@ function union_range( &$ranges, $start, $end ) {
     $ranges[] = array( $start, $end );
 }
 
-function formatPreHit( $text, $start ) {
-    if ($start > 15) {
-        return '... ' . escapeHTML( substr( $text, $start - 12, 12 ) );
+function formatPreHit( $text, $start, $context ) {
+    if ($start > $context) {
+        return '... ' . escapeHTML( substr( $text, $start - ($context - 3), ($context - 3) ) );
     } else {
         return escapeHTML( substr( $text, 0, $start ) );
     }
@@ -112,23 +124,23 @@ function formatHit( $text, $range ) {
     return '<b>' . escapeHTML( substr( $text, $range[0], $range[1] - $range[0] ) ) . '</b>';
 }
 
-function formatBetweenHits( $text, $start, $end ) {
-    if ($end - $start > 35 + 15) {
-        return escapeHTML( substr( $text, $start, 35 ) ) . ' ... ' . escapeHTML( substr( $text, $end - 12, 12 ) );
+function formatBetweenHits( $text, $start, $end, $postContext, $preContext ) {
+    if ($end - $start > $postContext + $preContext) {
+        return escapeHTML( substr( $text, $start, $postContext ) ) . ' ...<br/>... ' . escapeHTML( substr( $text, $end - ($preContext - 3), ($preContext - 3) ) );
     } else {
         return escapeHTML( substr( $text, $start, $end - $start ) );
     }
 }
 
-function formatPostHit( $text, $end ) {
-    if (strlen( $text ) - $end > 35) {
-        return escapeHTML( substr( $text, $end, 32 ) ) . ' ... ';
+function formatPostHit( $text, $end, $context ) {
+    if (strlen( $text ) - $end > $context) {
+        return escapeHTML( substr( $text, $end, ($context - 3) ) ) . ' ... ';
     } else {
         return escapeHTML( substr( $text, $end, strlen( $text ) - $end ) );
     }
 }
 
-function formatHits( $text, $terms ) {
+function formatHits( $text, $terms, $isTitle ) {
     $ranges = array();
     foreach ($terms AS $term) {
         $ix = stripos( $text, $term );
@@ -140,30 +152,47 @@ function formatHits( $text, $terms ) {
     if (count( $ranges ) == 0) {
         return false;
     }
-    $formatted = formatPreHit( $text, $ranges[0][0] ) . formatHit( $text, $ranges[0] );
-    for ($i = 1; $i < count( $ranges ); $i++) {
-        $formatted .= formatBetweenHits( $text, $ranges[$i-1][1], $ranges[$i][0] ) . formatHit( $text, $ranges[$i] );
+    if ($isTitle) {
+        $preContext = 100;
+        $postContext = 100;
+    } else {
+        $preContext = 30;
+        $postContext = 70;
     }
-    $formatted .= formatPostHit( $text, $ranges[ count( $ranges ) - 1 ][1] );
+    $formatted = formatPreHit( $text, $ranges[0][0], $preContext ) . formatHit( $text, $ranges[0] );
+    for ($i = 1; $i < count( $ranges ); $i++) {
+        $formatted .= formatBetweenHits( $text, $ranges[$i-1][1], $ranges[$i][0], $postContext, $preContext ) . formatHit( $text, $ranges[$i] );
+    }
+    $formatted .= formatPostHit( $text, $ranges[ count( $ranges ) - 1 ][1], $postContext );
     return $formatted;
 }
 
 $results = array();
 $timestamps = array();
 foreach ($matches AS $matchRow) {
+    // metadata table has no stamp column, so special-case that. by
+    // using a future time we ensure that title hits show up as most
+    // recent/relevant
+    $metaHit = ($matchRow['table'] == 'metadata');
+    $timestamp = ($metaHit ? time() + 86400 : strtotime( $matchRow['stamp'] ));
     if (! isset( $results[ $matchRow['bug'] ] )) {
         $results[ $matchRow['bug'] ] = array();
-        // metadata table has no stamp column, so special-case that. by
-        // using a future time we ensure that title hits show up as most
-        // recent/relevant
-        $timestamps[ $matchRow['bug'] ] = ($matchRow['table'] == 'metadata' ? time() + 86400 : strtotime( $matchRow['stamp'] ));
+        $timestamps[ $matchRow['bug'] ] = $timestamp;
+    } else {
+        $timestamps[ $matchRow['bug'] ] = max( $timestamps[ $matchRow['bug'] ], $timestamp );
     }
-    foreach ($_SEARCH_COLUMNS[ $matchRow['table'] ] AS $column) {
-        $hit = formatHits( $matchRow[ $column ], $terms );
-        if ($hit) {
-            $results[ $matchRow['bug'] ][] = $hit;
+    if (! $metaHit) {
+        foreach ($_SEARCH_COLUMNS[ $matchRow['table'] ] AS $column) {
+            $hit = formatHits( $matchRow[ $column ], $terms, false );
+            if ($hit) {
+                $results[ $matchRow['bug'] ][] = $hit;
+            }
         }
     }
+}
+
+if (! arsort( $timestamps, SORT_NUMERIC )) {
+    fail( "Unable to sort timestamps" );
 }
 
 header( 'Content-Type: text/html; charset=utf8' );
@@ -200,9 +229,18 @@ div.title {
  </head>
  <body>
 <?php
-foreach ($results AS $bug => $hits) {
+foreach ($timestamps AS $bug => $stamp) {
+    $hits = $results[ $bug ];
     echo '  <div class="bug">', "\n";
-    echo '   <div class="title">Bug ', $bug, '</div>', "\n";
+    $formattedTitle = formatHits( $meta_titles[ $bug ], $terms, true );
+    if (! $formattedTitle) {
+        $formattedTitle = escapeHTML( $meta_titles[ $bug ] );
+    }
+    echo sprintf( '   <div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s</div>',
+                  $_BASE_URL,
+                  $bug,
+                  $bug,
+                  $formattedTitle ), "\n";
     foreach ($hits AS $hit) {
         echo '   <div class="row">', $hit, '</div>', "\n";
     }
