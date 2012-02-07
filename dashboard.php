@@ -285,6 +285,12 @@ body {
     width: 25%;
     float: left;
 }
+@media (max-width:800px) {
+    .column {
+        width: 100%;
+        float: left;
+    }
+}
 .bug {
     margin: 2px;
     padding: 2px;
