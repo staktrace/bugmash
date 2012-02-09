@@ -49,7 +49,7 @@ function insertBugTags( user, bugnumbers ) {
         method: "POST",
         url: "https://staktrace.com/apps/bugmash/tags.php",
         data: reqData,
-        onload: function(res) {
+        onload: function( res ) {
             var response = res.responseJSON;
             var rows = document.getElementsByClassName( "bz_buglist" )[0].getElementsByClassName( "bz_bugitem" );
             for (var i = 0; i < rows.length; i++) {
@@ -74,6 +74,11 @@ function insertBugTags( user, bugnumbers ) {
                 tag.addEventListener( 'click', updateBugTag, false );
                 cell.insertBefore( tag, cell.firstChild );
             }
+        },
+        onerror: function( res ) {
+            GM_log( "Error fetching bug tags!" );
+            GM_log( res.statusText );
+            GM_log( res.responseText );
         }
     });
 }
