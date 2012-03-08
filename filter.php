@@ -167,6 +167,10 @@ function normalizeFieldList( $fieldString ) {
             if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Whiteboard') {
                 $word .= ' '. $words[ ++$i ];
             }
+        } else if ($word == 'Comment') {
+            if ($i + 3 < count( $words) && $words[ $i + 2 ] == 'is' && $words[ $i + 3 ] == 'private') {
+                $word .= ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ];
+            }
         }
         $fields[] = $word;
     }
