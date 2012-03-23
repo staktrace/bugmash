@@ -87,6 +87,9 @@ foreach ($mail as $mailLine) {
         $bugzillaHeaders[ 'subject' ] = trim( substr( $mailLine, 8 ) );
     } else if (strpos( $mailLine, 'Date:' ) === 0) {
         $bugzillaHeaders[ 'date' ] = strtotime( trim( substr( $mailLine, 5 ) ) );
+    } else if (strpos( $mailLine, 'Content-Transfer-Encoding: quoted-printable' ) === 0) {
+        $mailText = quoted_printable_decode( $mailText );
+        $mailString = quoted_printable_decode( $mailString );
     }
 }
 
@@ -410,8 +413,7 @@ if ($type == 'request') {
     $title = trim( $matches[1] );
     $author = getField( 'who' );
     $matches = array();
-    // if the email is Content-Transfer-Encoding: quoted-printable the space could be =20 so check for that too
-    if (preg_match( "/Bug #: .*?\n\n\n(.*\n\n)?--( |=20)\n/s", $mailString, $matches ) == 0) {
+    if (preg_match( "/Bug #: .*?\n\n\n(.*\n\n)?-- \n/s", $mailString, $matches ) == 0) {
         fail( 'No description' );
     }
     $desc = trim( $matches[1] );
