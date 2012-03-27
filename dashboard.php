@@ -210,7 +210,7 @@ while ($row = $result->fetch_assoc()) {
     // Hide duplicated review comments (one from Type=request email and one from Type=changed email)
     if (strpos( $row['comment'], "Review of attachment" ) !== FALSE) {
         $matches = array();
-        if (preg_match( "/^Comment on attachment (\d+)\n  -->.*\n.*\n\nReview of attachment \d+:\n -->.*\n--*-\n\n/", $row['comment'], $matches ) > 0) {
+        if (preg_match( "/^Comment on attachment (\d+)\n  -->.*\n.*(\n.+)*\n\nReview of attachment \d+:\n -->.*\n--*-\n\n/", $row['comment'], $matches ) > 0) {
             if (isset( $filterComments[ $matches[1] ] )) {
                 foreach ($filterComments[ $matches[1] ] AS $filterComment) {
                     // strip whitespace before comparison because sometimes the emails are formatted differently. stupid bugzilla
