@@ -245,13 +245,14 @@ foreach ($bblocks AS $bug => &$block) {
     $touchTime = key( $block );
     $block = sprintf( '<div class="bug" id="bug%d"><div class="title">'
                     . '<a class="wipe" href="#">X</a>'
-                    . '<a class="noteify" href="#" onclick="return noteify(this, %d)">%s</a>'
+                    . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, %d)">%s</a>'
                     . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
                     . '</div>'
                     . '<div>%s</div>'
                     . '<div class="footer"><a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a></div>'
                     . '</div>',
                       $bug,
+                      (in_array($bug, $bugsWithNotes) ? escapeHTML( $meta_notes[ $bug ] . ' | ' . $meta_tags[ $bug ] ) : ''),
                       $bug,
                       (in_array($bug, $bugsWithNotes) ? 'U' : 'N'),
                       $_BASE_URL,
