@@ -57,6 +57,8 @@ while ($row = $result->fetch_assoc()) {
     $meta_tags[ $row['bug'] ] = $row['taglist'];
 }
 
+$bugsWithNotes = array_unique( array_merge( array_keys( $meta_notes ), array_keys( $meta_tags ) ) );
+
 //
 // main helpers and rendering code
 //
@@ -243,7 +245,7 @@ foreach ($bblocks AS $bug => &$block) {
     $touchTime = key( $block );
     $block = sprintf( '<div class="bug" id="bug%d"><div class="title">'
                     . '<a class="wipe" href="#">X</a>'
-                    . '<a class="noteify" href="#" onclick="return noteify(%d)">N</a>'
+                    . '<a class="noteify" href="#" onclick="return noteify(this, %d)">%s</a>'
                     . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
                     . '</div>'
                     . '<div>%s</div>'
@@ -251,6 +253,7 @@ foreach ($bblocks AS $bug => &$block) {
                     . '</div>',
                       $bug,
                       $bug,
+                      (in_array($bug, $bugsWithNotes) ? 'U' : 'N'),
                       $_BASE_URL,
                       $bug,
                       $bug,
@@ -421,7 +424,7 @@ a.linkified:hover {
         return true;
     }
 
-    function noteify( bugnumber ) {
+    function noteify( linkElement, bugnumber ) {
         var notes = document.getElementsByClassName( "note" );
         // see if we can find a note already for this bug and just give it focus
         var search = "Bug " + bugnumber;
@@ -441,6 +444,7 @@ a.linkified:hover {
         }
         // couldn't find it, so add a new one
         addNote( bugnumber );
+        linkElement.textContent = 'U';
         return false;
     }
   </script>
@@ -464,8 +468,7 @@ for ($i = 0; $i < 4; $i++) {
    <fieldset>
     <legend>Bug notes</legend>
 <?php
-$buglist = array_unique( array_merge( array_keys( $meta_notes ), array_keys( $meta_tags ) ) );
-foreach ($buglist AS $bug) {
+foreach ($bugsWithNotes AS $bug) {
     echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: '
                 . '<input class="noteinput" type="text" name="note%d" value="%s"/>'
                 . '<input class="tagsinput" type="text" name="tags%d" value="%s"/> '
