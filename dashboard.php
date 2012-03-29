@@ -96,6 +96,7 @@ function linkify( $text, $bug ) {
     global $_BASE_URL;
     $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
     $text = preg_replace( '/(bug\s+)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=$2">$1$2</a>', $text );
+    $text = preg_replace( '/(bug-)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=$2">$1$2</a>', $text );
     $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/page.cgi?id=splinter.html&bug=' . $bug . '&attachment=$2">$1$2</a>', $text );
     return $text;
 }
