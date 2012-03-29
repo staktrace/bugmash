@@ -12,12 +12,16 @@ $mailText = implode( '', $mail );
 $time = (isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time());
 $filename = $time . '.' . sha1( $mailString );
 
-if ((! isset( $_SERVER['EXTENSION'] ))
-    || (! isset( $_SERVER['SENDER'] ))
-    || (strcmp( $_SERVER['EXTENSION'], 'bugmash' ) != 0)
-    || (strpos( $_SERVER['SENDER'], 'bugzilla-daemon@' ) !== 0))
-{
-    // doesn't look like a bugmail, probably spam but possible bounce notifications. toss it in maildir
+if (isset( $_MY_EXTENSION )) {
+    if ((! isset( $_SERVER['EXTENSION'] )) || strcmp( $_SERVER['EXTENSION'], $_MY_EXTENSION ) != 0) {
+        // the extension on the incoming email doesn't match the one we have specified. put it aside
+        file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
+        exit( 0 );
+    }
+}
+
+if ((! isset( $_SERVER['SENDER'] )) || (strpos( $_SERVER['SENDER'], 'bugzilla-daemon@' ) !== 0)) {
+    // doesn't look like a bugmail, probably spam but possible bounce notifications. put it aside
     file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
     exit( 0 );
 }
