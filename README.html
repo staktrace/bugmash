@@ -28,7 +28,7 @@
 
   <code>"|/home/myusername/path/to/filter.php"</code>
 
-  <p>This takes all incoming email and pipes it to the filter.php script. Make sure you mark filter.php as executable, and have a php interpreter on your $PATH somewhere. The scraper extracts useful information from Bugzilla emails, and stuffs it into a MySQL database. That's right, welcome to component #2...</p>
+  <p>This takes all incoming email and pipes it to the filter.php script. Make sure you mark filter.php as executable, and update the hashbang line at the top to point to your php interpreter. The scraper extracts useful information from Bugzilla emails, and stuffs it into a MySQL database. That's right, welcome to component #2...</p>
 
   <p>The second component is a MySQL database. This is where all the bug data is actually stored after being extracted from the emails. You will need to set up a database with the necessary tables (schemas are in tables.sql). You will also need to rename the example.config.php file to bugmash.config.php and put your database access information into it. While you're at it, also fill in $_ME in the config file with the email address on your Bugzilla account (i.e. what shows up when you go to Bugzilla preferences).</p>
 

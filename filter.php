@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+#!/usr/local/bin/php
 <?php
 
 include_once( 'bugmash.config.php' );
