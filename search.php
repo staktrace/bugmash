@@ -96,6 +96,13 @@ foreach ($terms AS $term) {
     }
 }
 
+// blow away bugs that didn't match all the terms
+for ($i = count( $matches ) - 1; $i >= 0; $i--) {
+    if (! in_array( $matches[$i]['bug'], $finalBuglist )) {
+        unset( $matches[$i] );
+    }
+}
+
 function union_range( &$ranges, $start, $end ) {
     for ($i = 0; $i < count( $ranges ); $i++) {
         if ($ranges[$i][0] > $end) {
