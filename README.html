@@ -78,7 +78,7 @@
   <h2 id="kissues">Known issues</h2>
   <ul>
    <li>The code to strikethrough obsoleted review requests doesn't seem to be taking effect. Not sure where in the code this bug is, haven't really looked at it.</li>
-   <li>The new PGP/GPG-signed emails for secure bugs are not handled. If you don't have a key set up, the emails with the message "This email would have contained confidential information..." will be flagged as unparseable and saved. If you do have a key set up, I don't know what happens because I haven't done that yet.</li>
+   <li>The new PGP/GPG-signed emails for secure bugs are not handled. If you don't have a key set up, the emails with the message "This email would have contained confidential information..." will generate a bug block with an "Unknown" field change. If you do have a key set up, I don't know what happens because I haven't done that yet.</li>
    <li>When concurrently editing tags via both the user script and the dashboard, it is easy to accidentally clobber tag changes. This should be detected and handled better.</li>
   </ul>
 

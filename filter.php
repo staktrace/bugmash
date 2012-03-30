@@ -342,7 +342,15 @@ $bug = getField( 'id' );
 $type = getField( 'type' );
 $date = date( 'Y-m-d H:i:s', getField( 'date' ) );
 
-if ($type == 'request') {
+if (strpos( $mailText, 'This email would have contained sensitive information' ) !== FALSE) {
+    // you haven't set a PGP/GPG key and this is for a secure bug, so there's no data in it.
+    $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
+    $fields = array( 'Unknown' );
+    $oldvals = array( 'Unknown' );
+    $newvals = array( 'Unknown' );
+    insertChanges( $bug, $date, $reason, $fields, $oldvals, $newvals );
+    success();
+} else if ($type == 'request') {
     $matches = array();
 
     if (preg_match( '/\[Attachment (\d+)\]/', $mailText, $matches ) == 0) {
