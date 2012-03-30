@@ -73,7 +73,7 @@ foreach ($terms AS $term) {
 
     $buglist = array();
     foreach ($_SEARCH_COLUMNS AS $table => $columns) {
-        $datefilter = ($table == 'metadata' ? '' : '(NOW() - INTERVAL 15 DAY <= stamp) AND');
+        $datefilter = '(NOW() - INTERVAL 15 DAY <= stamp) AND';
         $query = "SELECT * FROM $table WHERE $datefilter $bugfilter (" . implode( ' OR ', array_map( $termMapper, $columns ) ) . ')';
         $result = $_DB->query( $query );
         if (! $result) {
@@ -177,11 +177,7 @@ function formatHits( $text, $terms, $isTitle ) {
 $results = array();
 $timestamps = array();
 foreach ($matches AS $matchRow) {
-    // metadata table has no stamp column, so special-case that. by
-    // using a future time we ensure that title hits show up as most
-    // recent/relevant
-    $metaHit = ($matchRow['table'] == 'metadata');
-    $timestamp = ($metaHit ? time() + 86400 : strtotime( $matchRow['stamp'] ));
+    $timestamp = strtotime( $matchRow['stamp'] );
     if (! isset( $results[ $matchRow['bug'] ] )) {
         $results[ $matchRow['bug'] ] = array();
         $timestamps[ $matchRow['bug'] ] = $timestamp;

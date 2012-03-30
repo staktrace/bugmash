@@ -69,7 +69,7 @@
 
   <h3>Search</h3>
 
-  <p>Below the bug notes section is the search field. This is a very bare-bones search that searches through your saved bug data. Search queries are split into tokens on whitespace, and only bugs that match all of the tokens are shown. The results are limited to bugs modified in the last 15 days, except for bugs where only the title matches; all of those bugs are shown (this is a side-effect of the implementation; title information doesn't have last-modified timestamps). Results are sorted by time (most recent first), with the title-only bug matches on top of everything else. Try not to search for really common substrings because there is no limiting on the number of hits other than recency, and the search implementation isn't particularly efficient - it may bring your server to its knees.</p>
+  <p>Below the bug notes section is the search field. This is a very bare-bones search that searches through your saved bug data. Search queries are split into tokens on whitespace, and only bugs that match all of the tokens are shown. The results are limited to bugs modified in the last 15 days, and are sorted by time (most recent first). Try not to search for really common substrings because there is no limiting on the number of hits other than recency, and the search implementation isn't particularly efficient - it may bring your server to its knees.</p>
 
   <h3>Handling errors</h3>
 
