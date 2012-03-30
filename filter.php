@@ -164,7 +164,8 @@ function normalizeFieldList( $fieldString ) {
             || $word == 'Target' /* Milestone */
             || $word == 'Ever' /* Confirmed */
             || $word == 'Crash' /* Signature */
-            || $word == 'See' /* Also */)
+            || $word == 'See' /* Also */
+            || $word == 'Last' /* Resolved */)
         {
             if ($i + 1 >= count( $words )) {
                 fail( 'Unrecognized field list (4): ' . print_r( $words, true ) );
