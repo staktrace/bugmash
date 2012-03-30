@@ -79,6 +79,7 @@ CREATE TABLE `newbugs` (
 CREATE TABLE `metadata` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL DEFAULT 0,
+    `stamp` datetime NOT NULL,
     `title` varchar(255) NOT NULL DEFAULT '',
     `note` mediumtext NOT NULL DEFAULT '',
     PRIMARY KEY (`id`),

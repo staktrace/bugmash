@@ -328,20 +328,20 @@ function prepare( $query ) {
     return $stmt;
 }
 
-function updateTitle() {
+function updateMetadata( $date ) {
     $matches = array();
     if (preg_match( '/\[Bug (\d+)\] (.*)( : \[Attachment.*)?$/sU', getField( 'subject' ), $matches ) > 0) {
-        $stmt = prepare( 'INSERT INTO metadata (bug, title) VALUES (?, ?) ON DUPLICATE KEY UPDATE title=VALUES(title)' );
-        $stmt->bind_param( 'is', $matches[1], $matches[2] );
+        $stmt = prepare( 'INSERT INTO metadata (bug, stamp, title) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title)' );
+        $stmt->bind_param( 'iss', $matches[1], $date, $matches[2] );
         $stmt->execute();
     }
 }
 
-updateTitle();
-
 $bug = getField( 'id' );
 $type = getField( 'type' );
 $date = date( 'Y-m-d H:i:s', getField( 'date' ) );
+
+updateMetadata( $date );
 
 if (strpos( $mailText, 'This email would have contained sensitive information' ) !== FALSE) {
     // you haven't set a PGP/GPG key and this is for a secure bug, so there's no data in it.
