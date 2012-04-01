@@ -364,7 +364,7 @@ a.linkified:hover {
   <script type="text/javascript">
     function wipe(e) {
         var block = e.target;
-        while (block.className != "bug") {
+        while (! block.classList.contains("bug")) {
             block = block.parentNode;
         }
         var items = block.querySelectorAll( "div.row" );
