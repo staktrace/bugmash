@@ -5,12 +5,11 @@
 // @author Kartikaya Gupta <kgupta@mozilla.com> https://staktrace.com/
 // @version 1.0
 // @description Allows you tag bugs; the tags are then shown on Bugzilla pages
-// @updateURL https://staktrace.com/apps/bugmash/bugtags.user.js
-// @domain staktrace.com
-// @domain bugzilla.mozilla.org
 // @match https://bugzilla.mozilla.org/*
 // @run-at document-end
 // ==/UserScript==
+
+var TAGS_SERVER = 'https://example.com/path/to/tags.php';    // point this to your tags.php
 
 function getUser() {
     var links = document.links;
@@ -47,7 +46,7 @@ function insertBugTags( user, bugnumbers ) {
 
     GM_xmlhttpRequest({
         method: "POST",
-        url: "https://staktrace.com/apps/bugmash/tags.php",
+        url: TAGS_SERVER,
         data: reqData,
         onload: function( res ) {
             var response = res.responseJSON;
@@ -111,7 +110,7 @@ function updateBugTag( e ) {
 
     GM_xmlhttpRequest({
         method: "POST",
-        url: "https://staktrace.com/apps/bugmash/tags.php",
+        url: TAGS_SERVER,
         data: reqData,
         onload: function() {
             var color = 'blue';
