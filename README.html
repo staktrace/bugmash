@@ -26,9 +26,11 @@
 
   <p>First, there is an email scraper. This is contained in the filter.php file. You will need to set up your Bugzilla email such that you can feed the bugmail into this php script. The way I have it set up is I have my Bugzilla email account (bugmail.mozilla@staktrace.com) redirect to a mailbox on my webhost account (of the form myusername+bugmash@myaccountserver.dreamhost.com), and then I have a .forward file in my webhost account with a line like the one below:</p>
 
-  <code>"|/home/myusername/path/to/filter.php"</code>
+  <code>"| /home/myusername/path/to/filter.php"</code>
 
-  <p>This takes all incoming email and pipes it to the filter.php script. Make sure you mark filter.php as executable, and update the hashbang line at the top to point to your php interpreter. The scraper extracts useful information from Bugzilla emails, and stuffs it into a MySQL database. That's right, welcome to component #2...</p>
+  <p>This takes all incoming email and pipes it to the filter.php script. Make sure you mark filter.php as executable, and update the hashbang line at the top to point to your php interpreter. The scraper extracts useful information from Bugzilla emails, and stuffs it into a MySQL database (which is the second component, detailed below). If you want to be able to process PGP/GPG-encrypted bugmail as well, you can additionally pipe the mail through decrypt_mail.awk before piping it to filter.php. This assumes you have no passphrase on your gpg key, such that "gpg --decrypt" will successfully decrypt stdin to stdout. In this case, your .forward file would look like this:</p>
+
+  <code>"| /home/myusername/path/to/decrypt_mail.awk | /home/myusername/path/to/filter.php"</code>
 
   <p>The second component is a MySQL database. This is where all the bug data is actually stored after being extracted from the emails. You will need to set up a database with the necessary tables (schemas are in tables.sql). You will also need to rename the example.config.php file to bugmash.config.php and put your database access information into it. While you're at it, also fill in $_ME in the config file with the email address on your Bugzilla account (i.e. what shows up when you go to Bugzilla preferences).</p>
 
@@ -50,7 +52,7 @@
 
   <center><img src="bugmash-dashboard-screenshot.png" width="720" alt="Screenshot of the dashboard"/></center>
 
-  <p>All of the data for a given bug is contained inside a "bug block" (the thing with the blue header and footer). The header contains the bug number, the bug title, and two links in the top-right corner. The first link will be either "N" (for Note) or "U" (for Update). Clicking on this link will take you to the bottom of the dashboard, to the bug notes section, and allow you to add or edit the corresponding note and tag information for that bug. The "N" link will be displayed when there is no pre-existing note/tag, and the "U" link will be displayed when there is already a pre-existing note/tag for the bug. You can also hover your mouse over the "U" link to get the note/tag information in a tooltip.</p>
+  <p>All of the data for a given bug is contained inside a "bug block" (the thing with the blue header and footer). Note that if a bug is marked "secure" (so that the bugmail is PGP/GPG-encrypted), the header and border of the bug block is red instead. The header contains the bug number, the bug title, and two links in the top-right corner. The first link will be either "N" (for Note) or "U" (for Update). Clicking on this link will take you to the bottom of the dashboard, to the bug notes section, and allow you to add or edit the corresponding note and tag information for that bug. The "N" link will be displayed when there is no pre-existing note/tag, and the "U" link will be displayed when there is already a pre-existing note/tag for the bug. You can also hover your mouse over the "U" link to get the note/tag information in a tooltip.</p>
 
   <p>The second link is an "X" that marks the bug block as viewed. Clicking on the X makes the bug block disappear and shifts the column up so that you can click on the X for the next bug block without moving your mouse. Note that when you mark a bug block as viewed, the block is hidden and an XMLHttpRequest is sent to the server; if that XMLHttpRequest fails, the bug block will be made visible again, and the "X" will be replaced with "[E]" (for Error). If this happens, you can click on the "[E]" to try again (it does the same thing as the X).</p>
 
@@ -78,7 +80,6 @@
   <h2 id="kissues">Known issues</h2>
   <ul>
    <li>The code to strikethrough obsoleted review requests doesn't seem to be taking effect. Not sure where in the code this bug is, haven't really looked at it.</li>
-   <li>The new PGP/GPG-signed emails for secure bugs are not handled. If you don't have a key set up, the emails with the message "This email would have contained confidential information..." will generate a bug block with an "Unknown" field change. If you do have a key set up, I don't know what happens because I haven't done that yet.</li>
    <li>When concurrently editing tags via both the user script and the dashboard, it is easy to accidentally clobber tag changes. This should be detected and handled better.</li>
   </ul>
 

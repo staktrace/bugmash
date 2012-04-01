@@ -72,11 +72,17 @@ for ($i = 0; $i < count( $mail ); $i++) {
 }
 $mail = $merged;
 
+$bugIsSecure = false;
 $fromDomain = substr( $_SERVER['SENDER'], strpos( $_SERVER['SENDER'], '@' ) + 1 );
 $bugzillaHeaders = array();
 foreach ($mail as $mailLine) {
     if (strlen( $mailLine ) == 0) {
-        break;
+        $matches = array();
+        if (preg_match( '/\[Bug \d+\] \(Secure bug/', $bugzillaHeaders[ 'subject' ], $matches ) == 0) {
+            break;
+        }
+        $bugIsSecure = true;
+        // continue processing since there will be another subject header in the body, followed by another blank line
     }
     if (strpos( $mailLine, 'X-Bugzilla-' ) === 0) {
         $header = substr( $mailLine, strlen( 'X-Bugzilla-' ) );
@@ -329,10 +335,12 @@ function prepare( $query ) {
 }
 
 function updateMetadata( $date ) {
+    global $bugIsSecure;
     $matches = array();
     if (preg_match( '/\[Bug (\d+)\] (.*)( : \[Attachment.*)?$/sU', getField( 'subject' ), $matches ) > 0) {
-        $stmt = prepare( 'INSERT INTO metadata (bug, stamp, title) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title)' );
-        $stmt->bind_param( 'iss', $matches[1], $date, $matches[2] );
+        $stmt = prepare( 'INSERT INTO metadata (bug, stamp, title, secure) VALUES (?, ?, ?, ?) '
+                       . 'ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)' );
+        $stmt->bind_param( 'issi', $matches[1], $date, $matches[2], $bugIsSecure );
         $stmt->execute();
     }
 }

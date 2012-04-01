@@ -34,6 +34,7 @@ updateTags( $tagUpdates );
 //
 
 $meta_titles = array();
+$meta_secure = array();
 $meta_notes = array();
 $meta_tags = array();
 
@@ -47,6 +48,9 @@ while ($row = $result->fetch_assoc()) {
     }
     if (strlen( $row['note'] ) > 0) {
         $meta_notes[ $row['bug'] ] = $row['note'];
+    }
+    if ($row['secure']) {
+        $meta_secure[ $row['bug'] ] = 1;
     }
 }
 $result = $_DB->query( "SELECT bug, GROUP_CONCAT(tag ORDER BY id SEPARATOR ', ') AS taglist FROM tags GROUP BY bug ORDER BY id ASC" );
@@ -244,7 +248,7 @@ while ($row = $result->fetch_assoc()) {
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $block = sprintf( '<div class="bug" id="bug%d"><div class="title">'
+    $block = sprintf( '<div class="%sbug" id="bug%d"><div class="title">'
                     . '<a class="wipe" href="#">X</a>'
                     . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, %d)">%s</a>'
                     . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
@@ -252,6 +256,7 @@ foreach ($bblocks AS $bug => &$block) {
                     . '<div>%s</div>'
                     . '<div class="footer"><a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a></div>'
                     . '</div>',
+                      ($meta_secure[ $bug ] ? 'secure ' : ''),
                       $bug,
                       (in_array($bug, $bugsWithNotes) ? escapeHTML( $meta_notes[ $bug ] . ' | ' . $meta_tags[ $bug ] ) : ''),
                       $bug,
@@ -308,6 +313,9 @@ body {
     padding: 2px;
     border: 1px solid;
 }
+.secure {
+    border-color: red;
+}
 .row {
     border-bottom: dashed 1px;
     word-wrap: break-word;  /* deprecated by css3-text, but the one that firefox picks up */
@@ -323,6 +331,10 @@ div.title {
     word-wrap: break-word;  /* deprecated by css3-text, but the one that firefox picks up */
     overflow-wrap: break-word; /* what i can do with the lastest version of CSS3 text */
     overflow-wrap: break-word hyphenate; /* what i really want as per old css3-text (http://www.w3.org/TR/2011/WD-css3-text-20110901/#overflow-wrap0) */
+}
+.secure > div.title {
+    background-color: red;
+    color: white;
 }
 a.wipe {
     float: right;
