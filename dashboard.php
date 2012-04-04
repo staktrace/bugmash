@@ -148,7 +148,7 @@ while ($row = $result->fetch_assoc()) {
     $reasons[ $row['bug'] ][] = 'review';
 
     $filterComments[ $row['attachment'] ][] = $row['comment'];
-    $filterFlags[ $row['attachment'] ][] = array( "{$row['flag']}?({$row['authoremail']})", "{$type}" . ($row['granted'] ? '+' : '-') );
+    $filterFlags[ $row['attachment'] ][] = array( "{$row['flag']}?({$row['authoremail']})", "{$row['flag']}" . ($row['granted'] ? '+' : '-') );
 }
 
 $result = loadTable( 'requests' );
