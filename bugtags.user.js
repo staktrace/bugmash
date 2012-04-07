@@ -22,7 +22,7 @@ function getUser() {
     return null;
 }
 
-function getBugNumbers() {
+function getListBugNumbers() {
     var bugnumbers = new Array();
 
     var table = document.getElementsByClassName( "bz_buglist" );
@@ -38,7 +38,47 @@ function getBugNumbers() {
     return bugnumbers;
 }
 
-function insertBugTags( user, bugnumbers ) {
+function getTreeBugNumbers() {
+    var bugnumbers = new Array();
+
+    var tree = document.getElementsByClassName( "tree" );
+    if (tree.length != 1) {
+        return bugnumbers;
+    }
+    tree = tree[0];
+
+    var nodes = tree.getElementsByClassName( "summ_deep" );
+    for (var i = 0; i < nodes.length; i++) {
+        bugnumbers.push( nodes[i].id );
+    }
+    nodes = tree.getElementsByClassName( "summ" );
+    for (var i = 0; i < nodes.length; i++) {
+        bugnumbers.push( nodes[i].id );
+    }
+    return bugnumbers;
+}
+
+function buildTag( response, bugnumber ) {
+    var color = 'blue';
+    var tags = '+';
+    if (response[ bugnumber ]) {
+        tags = response[ bugnumber ].join( ", " );
+        if (tags.charAt( 0 ) == '!') {
+            tags = tags.substring( 1 );
+            color = 'red';
+        }
+    }
+    var tag = document.createElement( 'a' );
+    tag.id = 'bugmash' + bugnumber;
+    tag.href = '#';
+    tag.style.fontSize = 'smaller';
+    tag.style.color = color;
+    tag.textContent = tags;
+    tag.addEventListener( 'click', updateBugTag, false );
+    return tag;
+}
+
+function insertListBugTags( user, bugnumbers ) {
     var reqData = new FormData();
     reqData.append( "user", user );
     reqData.append( "action", "get" );
@@ -54,24 +94,44 @@ function insertBugTags( user, bugnumbers ) {
             for (var i = 0; i < rows.length; i++) {
                 var row = rows[i];
                 var bugnumber = row.id.substring( 1 );
+                var tag = buildTag( response, bugnumber );
                 var cell = row.cells[ row.cells.length - 1 ];
-                var color = 'blue';
-                var tags = '+';
-                if (response[ bugnumber ]) {
-                    tags = response[ bugnumber ].join( ", " );
-                    if (tags.charAt( 0 ) == '!') {
-                        tags = tags.substring( 1 );
-                        color = 'red';
-                    }
-                }
-                var tag = document.createElement( 'a' );
-                tag.id = 'bugmash' + bugnumber;
-                tag.href = '#';
-                tag.style.fontSize = 'smaller';
-                tag.style.color = color;
-                tag.textContent = tags;
-                tag.addEventListener( 'click', updateBugTag, false );
                 cell.insertBefore( tag, cell.firstChild );
+            }
+        },
+        onerror: function( res ) {
+            GM_log( "Error fetching bug tags!" );
+            GM_log( res.statusText );
+            GM_log( res.responseText );
+        }
+    });
+}
+
+function insertTreeBugTags( user, bugnumbers ) {
+    var reqData = new FormData();
+    reqData.append( "user", user );
+    reqData.append( "action", "get" );
+    reqData.append( "bugs", bugnumbers.join( "," ) );
+
+    GM_xmlhttpRequest({
+        method: "POST",
+        url: TAGS_SERVER,
+        data: reqData,
+        onload: function( res ) {
+            var response = res.responseJSON;
+            var nodes = document.getElementsByClassName( "tree" )[0].getElementsByClassName( "summ_deep" );
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                var bugnumber = node.id;
+                var tag = buildTag( response, bugnumber );
+                node.insertBefore( tag, node.lastElementChild );
+            }
+            nodes = document.getElementsByClassName( "tree" )[0].getElementsByClassName( "summ" );
+            for (var i = 0; i < nodes.length; i++) {
+                var node = nodes[i];
+                var bugnumber = node.id;
+                var tag = buildTag( response, bugnumber );
+                node.insertBefore( tag, node.lastElementChild );
             }
         },
         onerror: function( res ) {
@@ -133,8 +193,12 @@ function updateBugTag( e ) {
 
 var user = getUser();
 if (user) {
-    var bugnumbers = getBugNumbers();
+    var bugnumbers = getListBugNumbers();
     if (bugnumbers.length > 0) {
-        insertBugTags( user, bugnumbers );
+        insertListBugTags( user, bugnumbers );
+    }
+    bugnumbers = getTreeBugNumbers();
+    if (bugnumbers.length > 0) {
+        insertTreeBugTags( user, bugnumbers );
     }
 }
