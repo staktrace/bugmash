@@ -96,11 +96,16 @@ function stripWhitespace( $stuff ) {
     return preg_replace( '/\s/', '', $stuff );
 }
 
+function buglink( $prefix, $bug ) {
+    global $_BASE_URL, $meta_titles;
+    return '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=' . $bug . '" title="' . escapeHTML( $meta_titles[ $bug ] ) . '">' . $prefix . $bug . '</a>';
+}
+
 function linkify( $text, $bug ) {
     global $_BASE_URL;
     $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
-    $text = preg_replace( '/(bug\s+)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=$2">$1$2</a>', $text );
-    $text = preg_replace( '/(bug-)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=$2">$1$2</a>', $text );
+    $text = preg_replace( '/(bug\s+)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
+    $text = preg_replace( '/(bug-)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
     $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/page.cgi?id=splinter.html&bug=' . $bug . '&attachment=$2">$1$2</a>', $text );
     return $text;
 }
