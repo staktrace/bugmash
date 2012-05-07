@@ -110,6 +110,14 @@ function linkify( $text, $bug ) {
     return $text;
 }
 
+function buglinkify( $field, $text ) {
+    global $_BASE_URL;
+    if ($field === 'Depends on' || $field === 'Blocks') {
+        $text = preg_replace( '/(\d+)/e', 'buglink(\'\', \'\\1\')', $text );
+    }
+    return $text;
+}
+
 function column( &$reasons ) {
     if (array_search( 'review', $reasons ) !== FALSE) {
         return 0;
@@ -211,8 +219,8 @@ while ($row = $result->fetch_assoc()) {
                                                 ($hide ? ' style="display: none"' : ''),
                                                 $row['id'],
                                                 linkify( escapeHTML( $row['field'] ), $row['bug'] ),
-                                                escapeHTML( $row['oldval'] ),
-                                                escapeHTML( $row['newval'] ) ) . "\n";
+                                                buglinkify( $row['field'], escapeHTML( $row['oldval'] ) ),
+                                                buglinkify( $row['field'], escapeHTML( $row['newval'] ) ) ) . "\n";
     $reasons[ $row['bug'] ][] = $row['reason'];
 }
 
