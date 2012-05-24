@@ -234,7 +234,8 @@ while ($row = $result->fetch_assoc()) {
             if (isset( $filterComments[ $matches[1] ] )) {
                 foreach ($filterComments[ $matches[1] ] AS $filterComment) {
                     // strip whitespace before comparison because sometimes the emails are formatted differently. stupid bugzilla
-                    if (strpos( stripWhitespace( $row['comment'] ), stripWhitespace( $filterComment ) ) !== FALSE) {
+                    $strippedComment = stripWhitespace( $filterComment );
+                    if (strlen( $strippedComment ) > 0 && strpos( stripWhitespace( $row['comment'] ), $strippedComment ) !== FALSE) {
                         $hide = true;
                         break;
                     }
