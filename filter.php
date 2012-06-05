@@ -288,35 +288,37 @@ function saveComments( $bug, $date, $reason, &$mailString ) {
 }
 
 function saveDependencyChanges( $bug, $date, $reason, &$mailString ) {
-    $matches = array();
-    if (preg_match( '/Bug (\d+) depends on bug (\d+), which changed state./', $mailString, $matches ) == 0) {
-        return false;
-    }
-    if (strcmp( $bug, $matches[1] ) != 0) {
-        fail( 'Dependency email did not match bug number' );
-    }
-    $dependentBug = $matches[2];
+    $offset = 0;
+    while (true) {
+        $matches = array();
+        if (preg_match( '/Bug (\d+) depends on bug (\d+), which changed state./', $mailString, $matches, 0, $offset ) == 0) {
+            break;
+        }
+        if (strcmp( $bug, $matches[1] ) != 0) {
+            fail( 'Dependency email did not match bug number' );
+        }
+        $dependentBug = $matches[2];
 
-    // in this case we don't know the list of field names ahead of time, just that it will be one or more Status
-    // and Resolution fields. Since these won't line wrap, we can just do a simpler version of parseChangeTable
-    $matches = array();
-    $matchCount = preg_match_all( "/\n *What *\|Old Value *\|New Value\n-*\n(.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER );
-    if ($matchCount != 1) {
-        fail( 'Found ' . $matchCount . ' change tables in a dependency change email' );
+        // in this case we don't know the list of field names ahead of time, just that it will be one or more Status
+        // and Resolution fields. Since these won't line wrap, we can just do a simpler version of parseChangeTable
+        $matches = array();
+        if (preg_match( "/\n *What *\|Old Value *\|New Value\n-*\n(.*?)\n\n/s", $mailString, $matches, PREG_OFFSET_CAPTURE, $offset ) == 0) {
+            fail( 'Did not find change table corresponding to dependency change for bug ' . $dependentBug );
+        }
+        $tableRows = explode( "\n", $matches[1][0] );
+        $fields = array();
+        $oldvals = array();
+        $newvals = array();
+        foreach ($tableRows AS $row) {
+            list( $field, $oldval, $newval ) = explode( '|', $row );
+            $fields[] = 'depbug-' . $dependentBug . '-' . trim( $field );
+            $oldvals[] = trim( $oldval );
+            $newvals[] = trim( $newval );
+        }
+        insertChanges( $bug, $date, $reason, $fields, $oldvals, $newvals );
+        $offset = $matches[1][1] + strlen( $matches[1][0] );
     }
-    $tableRows = explode( "\n", $matches[1][0] );
-    $fields = array();
-    $oldvals = array();
-    $newvals = array();
-    foreach ($tableRows AS $row) {
-        list( $field, $oldval, $newval ) = explode( '|', $row );
-        $fields[] = 'depbug-' . $dependentBug . '-' . trim( $field );
-        $oldvals[] = trim( $oldval );
-        $newvals[] = trim( $newval );
-    }
-    insertChanges( $bug, $date, $reason, $fields, $oldvals, $newvals );
-
-    return true;
+    return ($offset > 0);
 }
 
 function prepare( $query ) {
