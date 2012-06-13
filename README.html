@@ -81,6 +81,8 @@
   <ul>
    <li>The code to strikethrough obsoleted review requests doesn't seem to be taking effect. Not sure where in the code this bug is, haven't really looked at it.</li>
    <li>When concurrently editing tags via both the user script and the dashboard, it is easy to accidentally clobber tag changes. This should be detected and handled better.</li>
+   <li>Bugzilla comments which contain "--" on a single line will be prematurely terminated, since that is taken as the end-of-comment marker.</li>
+   <li>Review authors whose name/email wraps onto a second line in the email are not handled properly.</li>
   </ul>
 
   <h2 id="improve">Areas for improvement</h2>
