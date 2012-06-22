@@ -256,6 +256,11 @@ function saveChanges( $bug, $date, $reason, &$mailString ) {
     $matches = array();
     $matchCount = preg_match_all( "/\n( *What *\|Removed *\|Added\n-*\n.*?)\n\n/s", $mailString, $matches, PREG_PATTERN_ORDER | PREG_OFFSET_CAPTURE );
     if ($matchCount == 0) {
+        // we might end up here in some cases if the only "field" that changed
+        // is a comment privacy flag
+        if (count( $fields ) == 1 && strpos( $fields[0], " is private" ) !== FALSE) {
+            return $ret;
+        }
         fail( 'No change table' );
     }
     $tableRows = $matches[1][0][0];
