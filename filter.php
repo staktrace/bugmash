@@ -186,6 +186,13 @@ function normalizeFieldList( $fieldString ) {
                 $word .= ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ];
             }
         }
+        if ($word == 'Ever Confirmed') {
+            $word = 'Ever confirmed';
+        } else if ($word == 'OS/Version') {
+            $word = 'OS';
+        } else if ($word == 'Platform') {
+            $word = 'Hardware';
+        }
         $fields[] = $word;
     }
     return $fields;
@@ -307,7 +314,7 @@ function saveDependencyChanges( $bug, $date, $reason, &$mailString ) {
         // in this case we don't know the list of field names ahead of time, just that it will be one or more Status
         // and Resolution fields. Since these won't line wrap, we can just do a simpler version of parseChangeTable
         $matches = array();
-        if (preg_match( "/\n *What *\|Old Value *\|New Value\n-*\n(.*?)\n\n/s", $mailString, $matches, PREG_OFFSET_CAPTURE, $offset ) == 0) {
+        if (preg_match( "/\n *What *\|Removed *\|Added\n-*\n(.*?)\n\n/s", $mailString, $matches, PREG_OFFSET_CAPTURE, $offset ) == 0) {
             fail( 'Did not find change table corresponding to dependency change for bug ' . $dependentBug );
         }
         $tableRows = explode( "\n", $matches[1][0] );
