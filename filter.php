@@ -194,6 +194,8 @@ function normalizeFieldList( $fieldString ) {
             $word = 'Hardware';
         } else if ($word == 'AssignedTo') {
             $word = 'Assignee';
+        } else if ($word == 'Status Whiteboard') {
+            $word = 'Whiteboard';
         }
         $fields[] = $word;
     }
