@@ -138,60 +138,57 @@ function normalizeReason( $reason, $watchReason ) {
     }
 }
 
-$_FIELD_NAME_MAP = array(
-    'assigned_to' => 'Assignee',
-    'attachments.description' => 'Attachment #...... description',
-    'attachments.isobsolete' => 'Attachment #...... is obsolete',
-    'attachments.ispatch' => 'Attachment #...... is patch',
-    'blocked' => 'Blocks',
-    'bug_id' => 'Bug ID',
-    'bug_severity' => 'Severity',
-    'bug_status' => 'Status',
-    'cc' => 'CC',
-    'cf_crash_signature' => 'Crash Signature',
-    'cf_last_resolved' => 'Last Resolved',
-    'cf_blocking_fennec' => 'tracking-fennec',
-    'classification' => 'Classification',
-    'component' => 'Component',
-    'dependson' => 'Depends on',
-    'everconfirmed' => 'Ever confirmed',
-    'flagtypes.name' => 'Attachment #...... Flags',
-    'keywords' => 'Keywords',
-    'op_sys' => 'OS',
-    'priority' => 'Priority',
-    'product' => 'Product',
-    'reporter' => 'Reporter',
-    'rep_platform' => 'Hardware',
-    'resolution' => 'Resolution',
-    'short_desc' => 'Summary',
-    'status_whiteboard' => 'Whiteboard',
-    'target_milestone' => 'Target Milestone',
-    'version' => 'Version'
-);
-
 function normalizeFieldList( $fieldString ) {
-    global $_FIELD_NAME_MAP;
-
     $words = array_filter( explode( ' ', $fieldString ) );
     $fields = array();
+    $currentField = '';
     for ($i = 0; $i < count( $words ); $i++) {
         $word = $words[ $i ];
-        if (strpos( $word, 'cf_status_' ) === 0) {
-            $fields[] = 'status-' . substr( $word, strlen( 'cf_status_' ) );
-        } else if (strpos( $word, 'cf_tracking_' ) === 0) {
-            $fields[] = 'tracking-' . substr( $word, strlen( 'cf_tracking_' ) );
-        } else if (strcmp( $word, 'attachments.created' ) == 0) {
-            continue; // no entry in the table
-        } else {
-            $field = $_FIELD_NAME_MAP[ $word ];
-            $fields[] = $field;
+        if ($word == 'Attachment' /* Created|#abcdef */) {
+            if ($i + 1 >= count( $words )) {
+                fail( 'Unrecognized field list (1): ' . print_r( $words, true ) );
+            }
+            $word .= ' ' . $words[ ++$i ];
+            if ($words[ $i ] == 'Created') {
+                // ignore "Attachment Created" in the field list since it doesn't have
+                // a corresponding entry in the field table
+                continue;
+            } else {
+                /* Flags|is|mime */
+                if ($i + 1 >= count( $words )) {
+                    fail( 'Unrecognized field list (2): ' . print_r( $words, true ) );
+                }
+                $word .= ' ' . $words[ ++$i ];
+                if ($words[ $i ] == 'is' /* obsolete */ || $words[ $i ] == 'mime' /* type */) {
+                    if ($i + 1 >= count( $words )) {
+                        fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
+                    }
+                    $word .= ' ' . $words[ ++$i ];
+                }
+            }
+        } else if ($word == 'Depends' /* On */
+            || $word == 'Target' /* Milestone */
+            || $word == 'Ever' /* Confirmed */
+            || $word == 'Crash' /* Signature */
+            || $word == 'See' /* Also */
+            || $word == 'Last' /* Resolved */)
+        {
+            if ($i + 1 >= count( $words )) {
+                fail( 'Unrecognized field list (4): ' . print_r( $words, true ) );
+            }
+            $word .= ' ' . $words[ ++$i ];
+        } else if ($word == 'Status') {
+            if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Whiteboard') {
+                $word .= ' '. $words[ ++$i ];
+            }
+        } else if ($word == 'Comment') {
+            if ($i + 3 < count( $words) && $words[ $i + 2 ] == 'is' && $words[ $i + 3 ] == 'private') {
+                $word .= ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ];
+            }
         }
+        $fields[] = $word;
     }
     return $fields;
-}
-
-function stripDigits( $value ) {
-    return preg_replace( '/(\d){6}/', '......', $value );
 }
 
 function parseChangeTable( $fields, $rows ) {
@@ -211,7 +208,7 @@ function parseChangeTable( $fields, $rows ) {
             continue;
         }
         $matchedStart = false;
-        if (strpos( $fields[ $ixField ], stripDigits( $col1 ) ) === 0) {
+        if (strpos( $fields[ $ixField ], $col1 ) === 0) {
             $matchedStart = true;
             if ($ixField > 0) {
                 $oldvals[] = trim( $oldval );
@@ -220,7 +217,7 @@ function parseChangeTable( $fields, $rows ) {
             $oldval = $col2;
             $newval = $col3;
         }
-        if (strpos( $fields[ $ixField ], stripDigits( $col1 ) ) === strlen( $fields[ $ixField ] ) - strlen( $col1 )) {
+        if (strpos( $fields[ $ixField ], $col1 ) === strlen( $fields[ $ixField ] ) - strlen( $col1 )) {
             if (! $matchedStart) {
                 $oldval .= $col2;
                 $newval .= $col3;
@@ -249,7 +246,7 @@ function insertChanges( $bug, $date, $reason, &$fields, &$oldvals, &$newvals ) {
     }
 }
 
-function saveChanges( $bug, $date, $reason, &$mailString, $allowNoChangeTable ) {
+function saveChanges( $bug, $date, $reason, &$mailString ) {
     $ret = 0;
     $fields = normalizeFieldList( getField( 'changed-fields' ) );
     if (count( $fields ) == 0) {
@@ -262,9 +259,6 @@ function saveChanges( $bug, $date, $reason, &$mailString, $allowNoChangeTable ) 
         // we might end up here in some cases if the only "field" that changed
         // is a comment privacy flag
         if (count( $fields ) == 1 && strpos( $fields[0], " is private" ) !== FALSE) {
-            return $ret;
-        }
-        if ($allowNoChangeTable) {
             return $ret;
         }
         fail( 'No change table' );
@@ -447,12 +441,12 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
     $title = trim( $matches[1] );
     $author = getField( 'who' );
     $matches = array();
-    if (preg_match( "/Bug ID: .*?\n\n(.*\n\n)?-- \n/s", $mailString, $matches ) == 0) {
+    if (preg_match( "/Bug #: .*?\n\n\n(.*\n\n)?-- \n/s", $mailString, $matches ) == 0) {
         fail( 'No description' );
     }
     $desc = trim( $matches[1] );
 
-    $extracted = saveChanges( $bug, $date, $reason, $desc, true );
+    $extracted = saveChanges( $bug, $date, $reason, $desc );
     $desc = trim( substr( $desc, $extracted ) );
 
     $stmt = prepare( 'INSERT INTO newbugs (bug, stamp, reason, title, author, description) VALUES (?, ?, ?, ?, ?, ?)' );
@@ -465,7 +459,7 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
 } else if ($type == 'changed') {
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
 
-    if (saveChanges( $bug, $date, $reason, $mailString, false ) == 0) {
+    if (saveChanges( $bug, $date, $reason, $mailString ) == 0) {
         saveDependencyChanges( $bug, $date, $reason, $mailString );
     }
     saveComments( $bug, $date, $reason, $mailString );
