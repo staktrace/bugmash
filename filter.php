@@ -192,6 +192,8 @@ function normalizeFieldList( $fieldString ) {
             $word = 'OS';
         } else if ($word == 'Platform') {
             $word = 'Hardware';
+        } else if ($word == 'AssignedTo') {
+            $word = 'Assignee';
         }
         $fields[] = $word;
     }
@@ -448,7 +450,7 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
     $title = trim( $matches[1] );
     $author = getField( 'who' );
     $matches = array();
-    if (preg_match( "/Bug #: .*?\n\n\n(.*\n\n)?-- \n/s", $mailString, $matches ) == 0) {
+    if (preg_match( "/Bug ID: .*?\n\n(.*\n\n)?-- \n/s", $mailString, $matches ) == 0) {
         fail( 'No description' );
     }
     $desc = trim( $matches[1] );
