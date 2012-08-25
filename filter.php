@@ -144,7 +144,7 @@ function normalizeFieldList( $fieldString ) {
     $currentField = '';
     for ($i = 0; $i < count( $words ); $i++) {
         $word = $words[ $i ];
-        if ($word == 'Attachment' /* Created|#abcdef */) {
+        if ($word == 'Attachment' /* Created|Flags|is|mime */) {
             if ($i + 1 >= count( $words )) {
                 fail( 'Unrecognized field list (1): ' . print_r( $words, true ) );
             }
@@ -153,18 +153,11 @@ function normalizeFieldList( $fieldString ) {
                 // ignore "Attachment Created" in the field list since it doesn't have
                 // a corresponding entry in the field table
                 continue;
-            } else {
-                /* Flags|is|mime */
+            } else if ($words[ $i ] == 'is' /* obsolete */ || $words[ $i ] == 'mime' /* type */) {
                 if ($i + 1 >= count( $words )) {
-                    fail( 'Unrecognized field list (2): ' . print_r( $words, true ) );
+                    fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
                 }
                 $word .= ' ' . $words[ ++$i ];
-                if ($words[ $i ] == 'is' /* obsolete */ || $words[ $i ] == 'mime' /* type */) {
-                    if ($i + 1 >= count( $words )) {
-                        fail( 'Unrecognized field list (3): ' . print_r( $words, true ) );
-                    }
-                    $word .= ' ' . $words[ ++$i ];
-                }
             }
         } else if ($word == 'Depends' /* On */
             || $word == 'Target' /* Milestone */
@@ -196,10 +189,18 @@ function normalizeFieldList( $fieldString ) {
             $word = 'Assignee';
         } else if ($word == 'Status Whiteboard') {
             $word = 'Whiteboard';
+        } else if ($word == 'QAContact') {
+            $word = 'QA Contact';
+        } else if ($word == 'Flags') {
+            $word = 'Attachment Flags';
         }
         $fields[] = $word;
     }
     return $fields;
+}
+
+function stripAttachmentNumber( $value ) {
+    return preg_replace( '/ #\d+/', '', $value );
 }
 
 function parseChangeTable( $fields, $rows ) {
@@ -210,7 +211,7 @@ function parseChangeTable( $fields, $rows ) {
     $newval = '';
     $ixField = 0;
     for ($i = 1; $i < count( $rows ); $i++) {
-        $col1 = trim( substr( $rows[$i], 0, $widths[0] ) );
+        $col1 = trim( stripAttachmentNumber( substr( $rows[$i], 0, $widths[0] ) ) );
         $col2 = substr( $rows[$i], $widths[0] + 1, $widths[1] );
         $col3 = substr( $rows[$i], $widths[0] + 1 + $widths[1] + 1 );
         if (strlen( $col1 ) == 0 || $ixField >= count( $fields )) {
