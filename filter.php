@@ -258,7 +258,7 @@ function insertChanges( $bug, $date, $reason, &$fields, &$oldvals, &$newvals ) {
     }
 }
 
-function saveChanges( $bug, $date, $reason, &$mailString ) {
+function saveChanges( $bug, $date, $reason, &$mailString, $requireTable ) {
     $ret = 0;
     $fields = normalizeFieldList( getField( 'changed-fields' ) );
     if (count( $fields ) == 0) {
@@ -273,7 +273,11 @@ function saveChanges( $bug, $date, $reason, &$mailString ) {
         if (count( $fields ) == 1 && strpos( $fields[0], " is private" ) !== FALSE) {
             return $ret;
         }
-        fail( 'No change table' );
+        if ($requireTable) {
+            fail( 'No change table' );
+        } else {
+            return $ret;
+        }
     }
     $tableRows = $matches[1][0][0];
     $ret = max( $ret, $matches[0][0][1] + strlen( $matches[0][0][0] ) );
@@ -458,7 +462,7 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
     }
     $desc = trim( $matches[1] );
 
-    $extracted = saveChanges( $bug, $date, $reason, $desc );
+    $extracted = saveChanges( $bug, $date, $reason, $desc, false );
     $desc = trim( substr( $desc, $extracted ) );
 
     $stmt = prepare( 'INSERT INTO newbugs (bug, stamp, reason, title, author, description) VALUES (?, ?, ?, ?, ?, ?)' );
@@ -471,7 +475,7 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
 } else if ($type == 'changed') {
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
 
-    if (saveChanges( $bug, $date, $reason, $mailString ) == 0) {
+    if (saveChanges( $bug, $date, $reason, $mailString, true ) == 0) {
         saveDependencyChanges( $bug, $date, $reason, $mailString );
     }
     saveComments( $bug, $date, $reason, $mailString );
