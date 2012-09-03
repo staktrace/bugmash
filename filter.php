@@ -191,8 +191,6 @@ function normalizeFieldList( $fieldString ) {
             $word = 'Whiteboard';
         } else if ($word == 'QAContact') {
             $word = 'QA Contact';
-        } else if ($word == 'Flags') {
-            $word = 'Attachment Flags';
         }
         $fields[] = $word;
     }
@@ -200,7 +198,7 @@ function normalizeFieldList( $fieldString ) {
 }
 
 function stripAttachmentNumber( $value ) {
-    return preg_replace( '/ #\d+/', '', $value );
+    return preg_replace( '/Attachment #\d+/', '', $value );
 }
 
 function parseChangeTable( $fields, $rows ) {
