@@ -197,10 +197,6 @@ function normalizeFieldList( $fieldString ) {
     return $fields;
 }
 
-function stripAttachmentNumber( $value ) {
-    return preg_replace( '/Attachment #\d+/', '', $value );
-}
-
 function parseChangeTable( $fields, $rows ) {
     // get widths to avoid dying on new/old values with pipe characters
     $columns = explode( '|', $rows[0] );
@@ -209,7 +205,7 @@ function parseChangeTable( $fields, $rows ) {
     $newval = '';
     $ixField = 0;
     for ($i = 1; $i < count( $rows ); $i++) {
-        $col1 = trim( stripAttachmentNumber( substr( $rows[$i], 0, $widths[0] ) ) );
+        $col1 = trim( substr( $rows[$i], 0, $widths[0] ) );
         $col2 = substr( $rows[$i], $widths[0] + 1, $widths[1] );
         $col3 = substr( $rows[$i], $widths[0] + 1 + $widths[1] + 1 );
         if (strlen( $col1 ) == 0 || $ixField >= count( $fields )) {
@@ -218,7 +214,7 @@ function parseChangeTable( $fields, $rows ) {
             continue;
         }
         $matchedStart = false;
-        if (strpos( $fields[ $ixField ], $col1 ) === 0) {
+        if (strpos( $fields[ $ixField ], $col1 ) === 0 || ($fields[ $ixField ] == 'Flags' && preg_match( '/Attachment #\d+/', $col1 ))) {
             $matchedStart = true;
             if ($ixField > 0) {
                 $oldvals[] = trim( $oldval );
