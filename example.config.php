@@ -9,8 +9,8 @@ $_MYSQL_USER = 'bugdb_user';
 $_MYSQL_PASS = 'bugdb_pass'
 $_MYSQL_DB = 'bugmash';
 
-// My bugmail address
-$_ME = 'bugmail@bugdb.example.com';
+// My bugmail addresses
+$_ME = array( 'bugmail@bugdb.example.com' );
 
 // The extension on the final email address that is receiving the email. You can always leave this unset to disable extension checking.
 // $_MY_EXTENSION = 'bugmash';

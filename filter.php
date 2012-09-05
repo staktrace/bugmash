@@ -431,7 +431,7 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
         }
     } else {
         $requestee = getField( 'flag-requestee' );
-        if ($requestee != $_ME) {
+        if (! in_array( $requestee, $_ME )) {
             fail( 'Requestee is not me' );
         }
         $flag = substr( $subject, 0, strpos( $subject, ' ' ) );

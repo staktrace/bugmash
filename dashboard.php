@@ -178,7 +178,9 @@ while ($row = $result->fetch_assoc()) {
                                                 ($row['cancelled'] ? '</strike>' : '') ) . "\n";
     $reasons[ $row['bug'] ][] = 'request';
 
-    $filterFlags[ $row['attachment'] ][] = array( '', "{$row['flag']}?({$_ME})" );
+    foreach ($_ME as $myEmail) {
+        $filterFlags[ $row['attachment'] ][] = array( '', "{$row['flag']}?({$myEmail})" );
+    }
 }
 
 $result = loadTable( 'newbugs' );

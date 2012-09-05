@@ -2,7 +2,7 @@
 
 include_once( 'common.php' );
 
-if (! (isset( $_POST['user'] ) && $_POST['user'] == $_ME)) {
+if (! (isset( $_POST['user'] ) && in_array( $_POST['user'], $_ME ))) {
     fail( 'Incorrect user: ' . $_POST['user'] );
 }
 
