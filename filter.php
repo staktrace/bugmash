@@ -214,8 +214,13 @@ function parseChangeTable( $fields, $rows ) {
             continue;
         }
         $matchedStart = false;
-        if (strpos( $fields[ $ixField ], $col1 ) === 0 || ($fields[ $ixField ] == 'Flags' && preg_match( '/Attachment #\d+/', $col1 ))) {
+        if (strpos( $fields[ $ixField ], $col1 ) === 0) {
             $matchedStart = true;
+        } else if ($fields[ $ixField ] == 'Flags' && preg_match( '/Attachment #\d+/', $col1 )) {
+            $fields[ $ixField ] = $col1 . ' ' . $fields[ $ixField ];
+            $matchedStart = true;
+        }
+        if ($matchedStart) {
             if ($ixField > 0) {
                 $oldvals[] = trim( $oldval );
                 $newvals[] = trim( $newval );
