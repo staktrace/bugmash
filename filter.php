@@ -20,7 +20,7 @@ if (isset( $_MY_EXTENSION )) {
     }
 }
 
-if ((! isset( $_SERVER['SENDER'] )) || (strpos( $_SERVER['SENDER'], 'bugzilla-daemon@' ) !== 0)) {
+if ((! isset( $_SERVER['SENDER'] )) || (strpos( $_SERVER['SENDER'], 'bugzilla' ) !== 0)) {
     // doesn't look like a bugmail, probably spam but possible bounce notifications. put it aside
     file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
     exit( 0 );
@@ -214,9 +214,9 @@ function parseChangeTable( $fields, $rows ) {
             continue;
         }
         $matchedStart = false;
-        if (strpos( $fields[ $ixField ], $col1 ) === 0) {
+        if (stripos( $fields[ $ixField ], $col1 ) === 0) {
             $matchedStart = true;
-        } else if ($fields[ $ixField ] == 'Flags' && preg_match( '/Attachment #\d+/', $col1 )) {
+        } else if ($fields[ $ixField ] == 'Flags' && preg_match( '/Attachment #\d+/i', $col1 )) {
             $fields[ $ixField ] = $col1 . ' ' . $fields[ $ixField ];
             $matchedStart = true;
         }
@@ -228,7 +228,7 @@ function parseChangeTable( $fields, $rows ) {
             $oldval = $col2;
             $newval = $col3;
         }
-        if (strpos( $fields[ $ixField ], $col1 ) === strlen( $fields[ $ixField ] ) - strlen( $col1 )) {
+        if (stripos( $fields[ $ixField ], $col1 ) === strlen( $fields[ $ixField ] ) - strlen( $col1 )) {
             if (! $matchedStart) {
                 $oldval .= $col2;
                 $newval .= $col3;
