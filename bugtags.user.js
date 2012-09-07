@@ -89,7 +89,7 @@ function insertListBugTags( user, bugnumbers ) {
         url: TAGS_SERVER,
         data: reqData,
         onload: function( res ) {
-            var response = res.responseJSON;
+            var response = JSON.parse( res.responseText );
             var rows = document.getElementsByClassName( "bz_buglist" )[0].getElementsByClassName( "bz_bugitem" );
             for (var i = 0; i < rows.length; i++) {
                 var row = rows[i];
@@ -118,7 +118,7 @@ function insertTreeBugTags( user, bugnumbers ) {
         url: TAGS_SERVER,
         data: reqData,
         onload: function( res ) {
-            var response = res.responseJSON;
+            var response = JSON.parse( res.responseText );
             var nodes = document.getElementsByClassName( "tree" )[0].getElementsByClassName( "summ_deep" );
             for (var i = 0; i < nodes.length; i++) {
                 var node = nodes[i];
