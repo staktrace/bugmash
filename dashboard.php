@@ -270,7 +270,10 @@ foreach ($bblocks AS $bug => &$block) {
                     . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
                     . '</div>'
                     . '<div>%s</div>'
-                    . '<div class="footer"><a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a></div>'
+                    . '<div class="footer">'
+                    . '<a class="wipetop" href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop); wipe(event); return false">X</a>'
+                    . '<a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a>'
+                    . '</div>'
                     . '</div>',
                       ($meta_secure[ $bug ] ? 'secure ' : ''),
                       $bug,
@@ -282,6 +285,7 @@ foreach ($bblocks AS $bug => &$block) {
                       $bug,
                       escapeHTML( $meta_titles[ $bug ] ),
                       implode( "\n", $block ),
+                      $bug,
                       $bug ) . "\n";
     $columns[ column( $reasons[ $bug ] ) ][ $touchTime ] .= $block;
 }
@@ -352,7 +356,7 @@ div.title {
     background-color: red;
     color: white;
 }
-a.wipe {
+a.wipe, a.wipetop {
     float: right;
     margin-left: 3px;
     vertical-align: top;
