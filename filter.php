@@ -297,11 +297,15 @@ function saveChanges( $bug, $date, $reason, &$mailString, $requireTable ) {
 
 function saveComments( $bug, $date, $reason, &$mailString ) {
     $matches = array();
-    $matchCount = preg_match_all( "/- Comment #(\d+) from ([^<]*) <[^\n]* ---\n(.*)\n\n--/sU", $mailString, $matches, PREG_PATTERN_ORDER );
+    $matchCount = preg_match_all( "/- Comment #(\d+) from ([^\n]*) ---\n(.*)\n\n--/sU", $mailString, $matches, PREG_PATTERN_ORDER );
     $stmt = prepare( 'INSERT INTO comments (bug, stamp, reason, commentnum, author, comment) VALUES (?, ?, ?, ?, ?, ?)' );
     for ($i = 0; $i < $matchCount; $i++) {
         $commentNum = $matches[1][$i];
         $author = $matches[2][$i];
+        $author = substr( $author, 0, 0 - strlen( 'YYYY-mm-dd HH:ii::ss ZZZ' ) );
+        if (strpos( $author, '<' ) !== FALSE) {
+            $author = substr( $author, 0, strpos( $author, '<' ) );
+        }
         $comment = $matches[3][$i];
         $stmt->bind_param( 'ississ', $bug, $date, $reason, $commentNum, $author, $comment );
         $stmt->execute();
