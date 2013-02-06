@@ -168,9 +168,10 @@ $result = loadTable( 'requests' );
 while ($row = $result->fetch_assoc()) {
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">%sr? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
+    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">%s%s? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
                                                 ($row['cancelled'] ? '<strike>' : ''),
+                                                abbrevFlag( $row['flag'] ),
                                                 $_BASE_URL,
                                                 $row['bug'],
                                                 $row['attachment'],
