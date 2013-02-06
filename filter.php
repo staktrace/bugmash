@@ -390,19 +390,25 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
     insertChanges( $bug, $date, $reason, $fields, $oldvals, $newvals );
     success();
 } else if ($type == 'request') {
-    $matches = array();
-
-    if (preg_match( '/\[Attachment (\d+)\]/', $mailText, $matches ) == 0) {
-        fail( 'No attachment id' );
-    }
-    $attachment = $matches[1];
-
-    if (preg_match( "/Attachment $attachment: (.*)/", $mailString, $matches ) == 0) {
-        fail( 'No attachment title' );
-    }
-    $title = $matches[1];
-
     $subject = getField( 'subject' );
+
+    $matches = array();
+    if (preg_match( '/\[Attachment (\d+)\]/', $mailText, $matches ) == 0) {
+        if (strpos( $subject, 'needinfo requested: [Bug' ) === FALSE) {
+            fail( 'Unrecognized request bugmail' );
+        }
+        // it's a needinfo request, hack the fields to insert ourself as a requestee
+        $bugzillaHeaders['flag-requestee'] = $_ME[0];
+        $attachment = 0;
+        $title = '';
+    } else {
+        $attachment = $matches[1];
+        if (preg_match( "/Attachment $attachment: (.*)/", $mailString, $matches ) == 0) {
+            fail( 'No attachment title' );
+        }
+        $title = $matches[1];
+    }
+
     if (! checkForField( 'flag-requestee' )) {
         if (strpos( $subject, ' canceled: [Bug' ) !== FALSE) {
             $granted = 0;
