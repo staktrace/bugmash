@@ -394,11 +394,12 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
 
     $matches = array();
     if (preg_match( '/\[Attachment (\d+)\]/', $mailText, $matches ) == 0) {
-        if (strpos( $subject, 'needinfo requested: [Bug' ) === FALSE) {
+        if (strpos( $subject, 'needinfo ' ) === FALSE) {
             fail( 'Unrecognized request bugmail' );
         }
-        // it's a needinfo request, hack the fields to insert ourself as a requestee
-        $bugzillaHeaders['flag-requestee'] = $_ME[0];
+        if (strpos( $subject, 'needinfo requested: [Bug' ) !== FALSE) {
+            $bugzillaHeaders['flag-requestee'] = $_ME[0];
+        }
         $attachment = 0;
         $title = '';
     } else {
@@ -425,8 +426,8 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
 
         $flag = substr( $subject, 0, strpos( $subject, ' ' ) );
         if ($cancelled) {
-            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE attachment=? AND flag=?' );
-            $stmt->bind_param( 'iis', $cancelled, $attachment, $flag );
+            $stmt = prepare( 'UPDATE requests SET cancelled=? WHERE bug=? AND attachment=? AND flag=?' );
+            $stmt->bind_param( 'iiis', $cancelled, $bug, $attachment, $flag );
             $stmt->execute();
             // this may cancel something we don't have a record of; if so, ignore
             success();
