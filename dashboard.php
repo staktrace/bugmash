@@ -266,13 +266,13 @@ foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
     $block = sprintf( '<div class="%sbug" id="bug%d"><div class="title">'
-                    . '<a class="wipe" href="#">X</a>'
+                    . '<a class="wipe" href="#">X&nbsp;</a>'
                     . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, %d)">%s</a>'
                     . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
                     . '</div>'
                     . '<div>%s</div>'
                     . '<div class="footer">'
-                    . '<a class="wipetop" href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop); wipe(event); return false">X</a>'
+                    . '<a class="wipetop" href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop); wipe(event); return false">X&nbsp;</a>'
                     . '<a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a>'
                     . '</div>'
                     . '</div>',
