@@ -313,6 +313,7 @@ function saveComments( $bug, $date, $reason, &$mailString ) {
             fail( 'Unable to insert new comment into DB: ' . $stmt->error );
         }
     }
+    return $matchCount;
 }
 
 function saveDependencyChanges( $bug, $date, $reason, &$mailString ) {
@@ -486,13 +487,20 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
         fail( 'Unable to insert new bug into DB: ' . $stmt->error );
     }
     success();
+} else if ($type == 'dep_changed') {
+    $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
+    if (saveDependencyChanges( $bug, $date, $reason, $mailString )) {
+        success();
+    }
+    fail( 'Unable to parse dep_changed email' );
 } else if ($type == 'changed') {
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
 
-    if (saveChanges( $bug, $date, $reason, $mailString, true ) == 0) {
-        saveDependencyChanges( $bug, $date, $reason, $mailString );
+    $extracted = saveChanges( $bug, $date, $reason, $mailString, true );
+    $comments = saveComments( $bug, $date, $reason, $mailString );
+    if ($extracted == 0 && $comments == 0) {
+        fail( 'Unable to extract meaningful data from changed email' );
     }
-    saveComments( $bug, $date, $reason, $mailString );
 
     success();
 } else {
