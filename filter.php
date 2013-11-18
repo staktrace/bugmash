@@ -215,12 +215,18 @@ function parseChangeTable( $fields, $rows ) {
         }
         $matchedStart = false;
         if (stripos( $fields[ $ixField ], $col1 ) === 0) {
+            // simple case match the start of the field against the column
             $matchedStart = true;
-        } else if (preg_match( '/Attachment #\d+/i', $col1 )) {
-            if ($fields[ $ixField ] == 'Flags') {
-                $fields[ $ixField ] = $col1 . ' ' . $fields[ $ixField ];
+        } else if (preg_match( '/^Attachment/', $col1 )) {
+            // Sometimes the attachment number is on the second line. Make sure we pick it up
+            $col1 .= ' ' . trim( substr( $rows[$i+1], 0, $widths[0] ) );
+            // Special case for flags, because the changed header just has "Flags" instead of "Attachment Flags"
+            if ($fields[ $ixField ] == 'Flags' && preg_match( '/^Attachment #\d+ Flags/', $col1 )) {
+                $fields[ $ixField ] = $col1;
                 $matchedStart = true;
+            // Otherwise insert the attachment number into $fields[$ixField]
             } else if (stripos( $fields[ $ixField ], preg_replace( '/Attachment #\d+/i', 'Attachment', $col1 ) ) === 0) {
+                $fields[ $ixField ] = preg_replace( '/(Attachment #\d+).*/', '\1', $col1 ) . substr( $fields[ $ixField ], strlen( 'Attachment' ));
                 $matchedStart = true;
             }
         }
