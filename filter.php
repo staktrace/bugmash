@@ -439,7 +439,7 @@ if (strpos( $mailText, 'This email would have contained sensitive information' )
             // this may cancel something we don't have a record of; if so, ignore
             success();
         } else {
-            if (preg_match( "/\n(.*) <(.*)> has (?:not )?granted/", $mailString, $matches ) == 0) {
+            if (preg_match( "/\n(.*) <(.*)>\\shas\\s(?:not\\s)?granted/", $mailString, $matches ) == 0) {
                 fail( 'Unable to determine author of review' );
             }
             $author = $matches[1];
