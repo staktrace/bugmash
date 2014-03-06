@@ -172,11 +172,15 @@ function normalizeFieldList( $fieldString ) {
             $word .= ' ' . $words[ ++$i ];
         } else if ($word == 'Status') {
             if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Whiteboard') {
-                $word .= ' '. $words[ ++$i ];
+                $word .= ' ' . $words[ ++$i ];
             }
         } else if ($word == 'Comment') {
             if ($i + 3 < count( $words) && $words[ $i + 2 ] == 'is' && $words[ $i + 3 ] == 'private') {
                 $word .= ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ];
+            }
+        } else if ($word == 'User') {
+            if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Story') {
+                $word .= ' ' . $words[ ++$i ];
             }
         }
         if ($word == 'Ever Confirmed') {
