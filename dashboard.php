@@ -272,8 +272,8 @@ foreach ($bblocks AS $bug => &$block) {
                     . '</div>'
                     . '<div>%s</div>'
                     . '<div class="footer">'
-                    . '<a class="wipetop" href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop); wipe(event); return false">X&nbsp;</a>'
-                    . '<a href="#" onclick="scrollTo(0,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a>'
+                    . '<a class="wipetop" href="#" onclick="scrollTo(document.getElementById(\'bug%d\').offsetLeft,document.getElementById(\'bug%d\').offsetTop); wipe(event); return false">X&nbsp;</a>'
+                    . '<a href="#" onclick="scrollTo(document.getElementById(\'bug%d\').offsetLeft,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a>'
                     . '</div>'
                     . '</div>',
                       ($meta_secure[ $bug ] ? 'secure ' : ''),
@@ -286,6 +286,8 @@ foreach ($bblocks AS $bug => &$block) {
                       $bug,
                       escapeHTML( $meta_titles[ $bug ] ),
                       implode( "\n", $block ),
+                      $bug,
+                      $bug,
                       $bug,
                       $bug ) . "\n";
     $columns[ column( $reasons[ $bug ] ) ][ $touchTime ] .= $block;
