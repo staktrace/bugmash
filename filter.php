@@ -175,8 +175,13 @@ function normalizeFieldList( $fieldString ) {
             if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Whiteboard') {
                 $word .= ' ' . $words[ ++$i ];
             }
-        } else if ($word == 'Comment') {
-            if ($i + 3 < count( $words) && $words[ $i + 2 ] == 'is' && $words[ $i + 3 ] == 'private') {
+        } else if ($word == 'Comment' /* Created | # is private */) {
+            if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Created') {
+                // ignore "Comment Created" in the field list since it doesn't have
+                // a corresponding entry in the field table
+                $i++;
+                continue;
+            } else if ($i + 3 < count( $words ) && $words[ $i + 2 ] == 'is' && $words[ $i + 3 ] == 'private') {
                 $word .= ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ];
             }
         } else if ($word == 'User') {
