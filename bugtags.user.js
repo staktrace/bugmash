@@ -7,6 +7,7 @@
 // @description Allows you tag bugs; the tags are then shown on Bugzilla pages
 // @match https://bugzilla.mozilla.org/*
 // @run-at document-end
+// @grant unsafeWindow
 // ==/UserScript==
 
 var TAGS_SERVER = 'https://example.com/path/to/tags.php';    // point this to your tags.php
@@ -84,7 +85,7 @@ function insertListBugTags( user, bugnumbers ) {
     reqData.append( "action", "get" );
     reqData.append( "bugs", bugnumbers.join( "," ) );
 
-    GM_xmlhttpRequest({
+    var arg = {
         method: "POST",
         url: TAGS_SERVER,
         data: reqData,
@@ -104,7 +105,8 @@ function insertListBugTags( user, bugnumbers ) {
             GM_log( res.statusText );
             GM_log( res.responseText );
         }
-    });
+    };
+    GM_xmlhttpRequest(arg);
 }
 
 function insertTreeBugTags( user, bugnumbers ) {
