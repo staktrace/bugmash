@@ -77,12 +77,7 @@ $fromDomain = substr( $_SERVER['SENDER'], strpos( $_SERVER['SENDER'], '@' ) + 1 
 $bugzillaHeaders = array();
 foreach ($mail as $mailLine) {
     if (strlen( $mailLine ) == 0) {
-        $matches = array();
-        if (preg_match( '/\[Bug \d+\] \(Secure bug/', $bugzillaHeaders[ 'subject' ], $matches ) == 0) {
-            break;
-        }
-        $bugIsSecure = true;
-        // continue processing since there will be another subject header in the body, followed by another blank line
+        break;
     }
     if (strpos( $mailLine, 'X-Bugzilla-' ) === 0) {
         $header = substr( $mailLine, strlen( 'X-Bugzilla-' ) );
@@ -101,6 +96,10 @@ foreach ($mail as $mailLine) {
         $mailText = quoted_printable_decode( $mailText );
         $mailString = quoted_printable_decode( $mailString );
     }
+}
+
+if (checkForField( 'Secure-Email' )) {
+    $bugIsSecure = true;
 }
 
 function checkForField( $key ) {
@@ -398,7 +397,7 @@ $date = date( 'Y-m-d H:i:s', getField( 'date' ) );
 
 updateMetadata( $date );
 
-if (strpos( $mailText, 'This email would have contained sensitive information' ) !== FALSE) {
+if ($bugIsSecure) {
     // you haven't set a PGP/GPG key and this is for a secure bug, so there's no data in it.
     $reason = normalizeReason( getField( 'reason' ), getField( 'watch-reason' ) );
     $fields = array( 'Unknown' );
