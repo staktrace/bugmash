@@ -249,7 +249,8 @@ while ($row = $result->fetch_assoc()) {
 
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
-    $isTbplRobot = (stripWhitespace( $row['author'] ) == 'TBPLRobot');
+    $isTbplRobot = (stripWhitespace( $row['author'] ) == 'TBPLRobot')
+                || (stripWhitespace( $row['author'] ) == 'TreeherderRobot');
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="%s%s" id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
                                                 ($hide ? 'display: none;' : 'white-space: pre-line;'),
                                                 ($isTbplRobot ? 'opacity: 0.5;' : ''),
