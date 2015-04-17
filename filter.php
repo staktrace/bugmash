@@ -11,6 +11,7 @@ $mailText = implode( '', $mail );
 
 $time = (isset( $_SERVER['REQUEST_TIME'] ) ? $_SERVER['REQUEST_TIME'] : time());
 $filename = $time . '.' . sha1( $mailString );
+date_default_timezone_set( 'UTC' );
 
 if (isset( $_MY_EXTENSION )) {
     if ((! isset( $_SERVER['EXTENSION'] )) || strcmp( $_SERVER['EXTENSION'], $_MY_EXTENSION ) != 0) {
