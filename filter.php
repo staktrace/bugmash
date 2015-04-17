@@ -21,10 +21,12 @@ if (isset( $_MY_EXTENSION )) {
     }
 }
 
-if ((! isset( $_SERVER['SENDER'] )) || (strpos( $_SERVER['SENDER'], 'bugzilla' ) !== 0)) {
-    // doesn't look like a bugmail, probably spam but possible bounce notifications. put it aside
-    file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
-    exit( 0 );
+if (isset( $_CHECK_SENDER ) && intval( $_CHECK_SENDER )) {
+    if ((! isset( $_SERVER['SENDER'] )) || (strpos( $_SERVER['SENDER'], 'bugzilla' ) !== 0)) {
+        // doesn't look like a bugmail, probably spam but possible bounce notifications. put it aside
+        file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
+        exit( 0 );
+    }
 }
 
 function fail( $message ) {
