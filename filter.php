@@ -74,7 +74,6 @@ for ($i = 0; $i < count( $mail ); $i++) {
 $mail = $merged;
 
 $bugIsSecure = false;
-$fromDomain = substr( $_SERVER['SENDER'], strpos( $_SERVER['SENDER'], '@' ) + 1 );
 $bugzillaHeaders = array();
 foreach ($mail as $mailLine) {
     if (strlen( $mailLine ) == 0) {
