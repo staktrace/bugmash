@@ -273,8 +273,8 @@ foreach ($bblocks AS $bug => &$block) {
                     . '</div>'
                     . '<div>%s</div>'
                     . '<div class="footer">'
-                    . '<a class="wipetop" href="#" onclick="window.scrollTo(document.getElementById(\'bug%d\').offsetLeft,document.getElementById(\'bug%d\').offsetTop); wipe(event); return false">X&nbsp;</a>'
-                    . '<a href="#" onclick="window.scrollTo(document.getElementById(\'bug%d\').offsetLeft,document.getElementById(\'bug%d\').offsetTop);return false">Back to top</a>'
+                    . '<a class="wipetop" href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'bug%d\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'bug%d\').offsetTop,window.scrollY)); wipe(event); return false">X&nbsp;</a>'
+                    . '<a href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'bug%d\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'bug%d\').offsetTop,window.scrollY));return false">Back to top</a>'
                     . '</div>'
                     . '</div>',
                       ($meta_secure[ $bug ] ? 'secure ' : ''),
