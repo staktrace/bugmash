@@ -7,7 +7,8 @@
 // @description Allows you tag bugs; the tags are then shown on Bugzilla pages
 // @match https://bugzilla.mozilla.org/*
 // @run-at document-end
-// @grant unsafeWindow
+// @grant GM_log
+// @grant GM_xmlhttpRequest
 // ==/UserScript==
 
 var TAGS_SERVER = 'https://example.com/path/to/tags.php';    // point this to your tags.php
