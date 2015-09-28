@@ -189,6 +189,10 @@ function normalizeFieldList( $fieldString ) {
             if ($i + 1 < count( $words ) && $words[ $i + 1 ] == 'Story') {
                 $word .= ' ' . $words[ ++$i ];
             }
+        } else if ($word == 'Has' /* Regression Range */) {
+            if ($i + 2 < count( $words ) && $words[ $i + 1 ] == 'Regression' && $words[ $i + 2 ] == 'Range') {
+                $word .= ' ' . $words[ ++$i ] . ' ' . $words[ ++$i ];
+            }
         }
         if ($word == 'Ever Confirmed') {
             $word = 'Ever confirmed';
