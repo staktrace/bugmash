@@ -106,7 +106,7 @@ function linkify( $text, $bug ) {
     $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
     $text = preg_replace( '/(bug\s+)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
     $text = preg_replace( '/(bug-)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
-    $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/page.cgi?id=splinter.html&bug=' . $bug . '&attachment=$2">$1$2</a>', $text );
+    $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/attachment.cgi?id=$2">$1$2</a>', $text );
     return $text;
 }
 
@@ -148,16 +148,28 @@ $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
-    $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="white-space: pre-line" id="r%d">%s: %s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
-                                                $row['id'],
-                                                escapeHTML( $row['author'] ),
-                                                abbrevFlag( $row['flag'] ),
-                                                ($row['granted'] ? '+' : '-'),
-                                                $_BASE_URL,
-                                                $row['bug'],
-                                                $row['attachment'],
-                                                escapeHTML( $row['title'] ),
-                                                (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
+    if (strstr( $row['title'], 'MozReview Request:' )) {
+        $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="white-space: pre-line" id="r%d">%s: %s%s <a href="%s/attachment.cgi?id=%d">%s</a>%s</div>',
+                                                    $row['id'],
+                                                    escapeHTML( $row['author'] ),
+                                                    abbrevFlag( $row['flag'] ),
+                                                    ($row['granted'] ? '+' : '-'),
+                                                    $_BASE_URL,
+                                                    $row['attachment'],
+                                                    escapeHTML( $row['title'] ),
+                                                    (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
+    } else {
+        $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="white-space: pre-line" id="r%d">%s: %s%s <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
+                                                    $row['id'],
+                                                    escapeHTML( $row['author'] ),
+                                                    abbrevFlag( $row['flag'] ),
+                                                    ($row['granted'] ? '+' : '-'),
+                                                    $_BASE_URL,
+                                                    $row['bug'],
+                                                    $row['attachment'],
+                                                    escapeHTML( $row['title'] ),
+                                                    (strlen( $row['comment'] ) > 0 ? ' with comments: ' . escapeHTML( $row['comment'] ) : '') ) . "\n";
+    }
     $reasons[ $row['bug'] ][] = 'review';
 
     $filterComments[ $row['attachment'] ][] = $row['comment'];
