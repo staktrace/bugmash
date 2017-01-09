@@ -14,6 +14,10 @@
 var TAGS_SERVER = 'https://example.com/path/to/tags.php';    // point this to your tags.php
 
 function getUser() {
+    var login = document.querySelector('td#moz_login .anchor');
+    if (login != null) {
+        return login.textContent.trim();
+    }
     var links = document.links;
     for (var i = 0; i < links.length; i++) {
         if (links[i].href.indexOf( "logout" ) > 0) {
