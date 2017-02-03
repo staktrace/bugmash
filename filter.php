@@ -400,8 +400,11 @@ function updateMetadata( $date ) {
     }
 }
 
-$bug = getField( 'id' );
 $type = getField( 'type' );
+if ($type == 'nag') {
+    success();
+}
+$bug = getField( 'id' );
 $date = date( 'Y-m-d H:i:s', getField( 'date' ) );
 
 updateMetadata( $date );
