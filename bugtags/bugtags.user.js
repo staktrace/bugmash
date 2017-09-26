@@ -13,6 +13,18 @@
 
 var TAGS_SERVER = 'https://example.com/path/to/tags.php';    // point this to your tags.php
 
+function GM_log( thing ) {
+    console.log( thing );
+}
+
+function GM_xmlhttpRequest( blob ) {
+    var xhr = new XMLHttpRequest();
+    xhr.onload = blob.onload;
+    xhr.onerror = blob.onerror;
+    xhr.open( blob.method, blob.url, true );
+    xhr.send( blob.data );
+}
+
 function getUser() {
     var login = document.querySelector('td#moz_login .anchor');
     if (login != null) {
