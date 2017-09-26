@@ -19,8 +19,12 @@ function GM_log( thing ) {
 
 function GM_xmlhttpRequest( blob ) {
     var xhr = new XMLHttpRequest();
-    xhr.onload = blob.onload;
-    xhr.onerror = blob.onerror;
+    xhr.onload = function() {
+        blob.onload( xhr );
+    };
+    xhr.onerror = function() {
+        blob.onerror( xhr );
+    };
     xhr.open( blob.method, blob.url, true );
     xhr.send( blob.data );
 }
@@ -119,7 +123,7 @@ function insertListBugTags( user, bugnumbers ) {
         },
         onerror: function( res ) {
             GM_log( "Error fetching bug tags!" );
-            GM_log( res.statusText );
+            GM_log( res.status );
             GM_log( res.responseText );
         }
     };
@@ -155,7 +159,7 @@ function insertTreeBugTags( user, bugnumbers ) {
         },
         onerror: function( res ) {
             GM_log( "Error fetching bug tags!" );
-            GM_log( res.statusText );
+            GM_log( res.status );
             GM_log( res.responseText );
         }
     });
