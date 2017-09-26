@@ -5,12 +5,6 @@
 
   "description": "Displays tags associated with bugs on bugzilla pages.",
 
-  "applications": {
-    "gecko": {
-      "id": "bugtags@staktrace.com"
-    }
-  },
-
   "content_scripts": [
     {
       "matches": ["https://bugzilla.mozilla.org/*"],
