@@ -34,6 +34,10 @@ function getUser() {
     if (login != null) {
         return login.textContent.trim();
     }
+    var newLogin = document.querySelector('.email');
+    if (email != null) {
+        return email.textContent.trim();
+    }
     var links = document.links;
     for (var i = 0; i < links.length; i++) {
         if (links[i].href.indexOf( "logout" ) > 0) {
