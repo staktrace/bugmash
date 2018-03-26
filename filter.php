@@ -22,9 +22,18 @@ if (isset( $_MY_EXTENSION )) {
 }
 
 if (isset( $_CHECK_SENDER ) && intval( $_CHECK_SENDER )) {
-    if ((! isset( $_SERVER['SENDER'] )) || (strpos( $_SERVER['SENDER'], 'bugzilla' ) !== 0)) {
+    $senderOk = false;
+    if (isset( $_SERVER['SENDER'] )) {
+        if ((strpos( $_SERVER['SENDER'], 'bugzilla' ) !== 0) ||
+            (strpos( $_SERVER['SENDER'], 'amazonses' ) !== 0))
+        {
+            $senderOk = true;
+        }
+    }
+    if (! $senderOk) {
         // doesn't look like a bugmail, probably spam but possible bounce notifications. put it aside
         file_put_contents( $_UNFILTERED_DIR . '/' . $filename, $mailString );
+        //file_put_contents( $_UNFILTERED_DIR . '/' . $filename . '.sender', isset( $_SERVER['SENDER'] ) ? $_SERVER['SENDER'] : '<no sender>' );
         exit( 0 );
     }
 }
