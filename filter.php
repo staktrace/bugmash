@@ -25,7 +25,7 @@ if (isset( $_CHECK_SENDER ) && intval( $_CHECK_SENDER )) {
     $senderOk = false;
     if (isset( $_SERVER['SENDER'] )) {
         if ((strpos( $_SERVER['SENDER'], 'bugzilla' ) !== 0) ||
-            (strpos( $_SERVER['SENDER'], 'amazonses' ) !== 0))
+            (strpos( $mailText, 'Bugzilla' ) !== 0))
         {
             $senderOk = true;
         }
