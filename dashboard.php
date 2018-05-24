@@ -138,6 +138,19 @@ function column( &$reasons ) {
     }
 }
 
+function initEmpty( &$blocks, $bug, $stamp ) {
+    if (!isset( $blocks[ $bug ][ $stamp ])) {
+        $blocks[ $bug ][ $stamp ] = '';
+    }
+}
+
+function safeGet( &$array, $index ) {
+    if (isset( $array[ $index ] )) {
+        return $array[ $index ];
+    }
+    return '';
+}
+
 $filterComments = array();
 $filterFlags = array();
 $numRows = 0;
@@ -148,6 +161,7 @@ $result = loadTable( 'reviews' );
 while ($row = $result->fetch_assoc()) {
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
+    initEmpty( $bblocks, $row['bug'], $stamp );
     if (strstr( $row['title'], 'MozReview Request:' )) {
         $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="white-space: pre-line" id="r%d">%s: %s%s <a href="%s/attachment.cgi?id=%d">%s</a>%s</div>',
                                                     $row['id'],
@@ -180,6 +194,7 @@ $result = loadTable( 'requests' );
 while ($row = $result->fetch_assoc()) {
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
+    initEmpty( $bblocks, $row['bug'], $stamp );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="q%d">%s%s? <a href="%s/page.cgi?id=splinter.html&bug=%d&attachment=%d">%s</a>%s</div>',
                                                 $row['id'],
                                                 ($row['cancelled'] ? '<strike>' : ''),
@@ -200,6 +215,7 @@ $result = loadTable( 'newbugs' );
 while ($row = $result->fetch_assoc()) {
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
+    initEmpty( $bblocks, $row['bug'], $stamp );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" id="n%d">New: <a href="%s/show_bug.cgi?id=%d">%s</a> by %s<br/>%s</div>',
                                                 $row['id'],
                                                 $_BASE_URL,
@@ -230,6 +246,7 @@ while ($row = $result->fetch_assoc()) {
 
     $numRows++;
     $stamp = strtotime( $row['stamp'] );
+    initEmpty( $bblocks, $row['bug'], $stamp );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row"%s id="d%d">%s: %s &rarr; %s</div>',
                                                 ($hide ? ' style="display: none"' : ''),
                                                 $row['id'],
@@ -263,6 +280,7 @@ while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
     $isTbplRobot = (stripWhitespace( $row['author'] ) == 'TBPLRobot')
                 || (stripWhitespace( $row['author'] ) == 'TreeherderRobot');
+    initEmpty( $bblocks, $row['bug'], $stamp );
     $bblocks[ $row['bug'] ][ $stamp ] .= sprintf( '<div class="row" style="%s%s" id="c%d">%s <a href="%s/show_bug.cgi?id=%d#c%d">said</a>:<br/>%s</div>',
                                                 ($hide ? 'display: none;' : 'white-space: pre-line;'),
                                                 ($isTbplRobot ? 'opacity: 0.5;' : ''),
@@ -527,10 +545,10 @@ foreach ($bugsWithNotes AS $bug) {
                   $bug,
                   $bug,
                   $bug,
-                  escapeHTML( $meta_notes[ $bug ] ),
+                  escapeHTML( safeGet( $meta_notes, $bug ) ),
                   $bug,
-                  escapeHTML( $meta_tags[ $bug ] ),
-                  escapeHTML( $meta_titles[ $bug ] ) ),
+                  escapeHTML( safeGet( $meta_tags, $bug ) ),
+                  escapeHTML( safeGet( $meta_titles, $bug ) ) ),
         "\n";
 }
 ?>
