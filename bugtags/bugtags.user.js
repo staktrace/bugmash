@@ -35,8 +35,8 @@ function getUser() {
         return login.textContent.trim();
     }
     var newLogin = document.querySelector('.email');
-    if (email != null) {
-        return email.textContent.trim();
+    if (newLogin != null) {
+        return newLogin.textContent.trim();
     }
     var links = document.links;
     for (var i = 0; i < links.length; i++) {
