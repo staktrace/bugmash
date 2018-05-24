@@ -522,7 +522,7 @@ a.linkified:hover {
  <body>
 <?php
 for ($i = 0; $i < 4; $i++) {
-    $buglist = $columns[$i];
+    $buglist = isset( $columns[$i] ) ? $columns[$i] : array();
     echo '  <div class="column">', "\n";
     if (count( $buglist ) > 0) {
         ksort( $buglist, SORT_NUMERIC );
