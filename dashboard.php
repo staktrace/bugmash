@@ -307,7 +307,7 @@ foreach ($bblocks AS $bug => &$block) {
                     . '<a href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'bug%d\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'bug%d\').offsetTop,window.scrollY));return false">Back to top</a>'
                     . '</div>'
                     . '</div>',
-                      ($meta_secure[ $bug ] ? 'secure ' : ''),
+                      (empty( $meta_secure[ $bug ] ) ? '' : 'secure '),
                       $bug,
                       (in_array($bug, $bugsWithNotes) ? escapeHTML( $meta_notes[ $bug ] . ' | ' . $meta_tags[ $bug ] ) : ''),
                       $bug,
@@ -321,7 +321,9 @@ foreach ($bblocks AS $bug => &$block) {
                       $bug,
                       $bug,
                       $bug ) . "\n";
-    $columns[ column( $reasons[ $bug ] ) ][ $touchTime ] .= $block;
+    $col = column( $reasons[ $bug ] );
+    initEmpty( $columns, $col, $touchTime );
+    $columns[ $col ][ $touchTime ] .= $block;
 }
 $_DB->close();
 
