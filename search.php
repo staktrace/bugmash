@@ -184,12 +184,10 @@ foreach ($matches AS $matchRow) {
     } else {
         $timestamps[ $matchRow['bug'] ] = max( $timestamps[ $matchRow['bug'] ], $timestamp );
     }
-    if (! $metaHit) {
-        foreach ($_SEARCH_COLUMNS[ $matchRow['table'] ] AS $column) {
-            $hit = formatHits( $matchRow[ $column ], $terms, false );
-            if ($hit) {
-                $results[ $matchRow['bug'] ][] = $hit;
-            }
+    foreach ($_SEARCH_COLUMNS[ $matchRow['table'] ] AS $column) {
+        $hit = formatHits( $matchRow[ $column ], $terms, false );
+        if ($hit) {
+            $results[ $matchRow['bug'] ][] = $hit;
         }
     }
 }
