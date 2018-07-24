@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-include_once( 'bugmash.config.php' );
+include_once( 'config.php' );
 
 $_DB = null;
 

@@ -18,8 +18,8 @@ function fail( $message ) {
     exit( 0 );
 }
 
-$BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../mailfilters/' . $_SERVER['SERVER_NAME'] . '/bugmash';
-include_once( $BUGMASH_DIR . '/bugmash.config.php' );
+$BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../scraper';
+include_once( $BUGMASH_DIR . '/config.php' );
 
 function updateTags( $newTags ) {
     global $_DB;
