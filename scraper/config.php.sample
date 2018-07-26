@@ -1,6 +1,6 @@
 <?php
 
-// copy this file to bugmash.config.php and fill in with
+// copy this file to config.php and fill in with
 // appropriate values. See README for details
 
 // MySQL access info
