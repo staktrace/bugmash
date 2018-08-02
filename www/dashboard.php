@@ -2,6 +2,8 @@
 
 include_once( 'common.php' );
 
+date_default_timezone_set( 'UTC' );
+
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
     fail( 'Error connecting to db: ' . mysqli_connect_error() );
@@ -315,7 +317,7 @@ foreach ($bblocks AS $bug => &$block) {
                       $_BASE_URL,
                       $bug,
                       $bug,
-                      escapeHTML( $meta_titles[ $bug ] ),
+                      escapeHTML( safeGet( $meta_titles, $bug ) ),
                       implode( "\n", $block ),
                       $bug,
                       $bug,

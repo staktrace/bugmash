@@ -11,7 +11,7 @@
 // @grant GM_xmlhttpRequest
 // ==/UserScript==
 
-var TAGS_SERVER = 'https://example.com/path/to/tags.php';    // point this to your tags.php
+var TAGS_SERVER = 'https://bugmash.staktrace.com/tags.php';    // point this to your tags.php
 
 function GM_log( thing ) {
     console.log( thing );
