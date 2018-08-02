@@ -405,8 +405,12 @@ function updateMetadata( $date ) {
     if (preg_match( '/\[Bug (\d+)\] (.*)( : \[Attachment.*)?$/sU', getField( 'subject' ), $matches ) > 0) {
         $stmt = prepare( 'INSERT INTO metadata (bug, stamp, title, secure) VALUES (?, ?, ?, ?) '
                        . 'ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)' );
-        $stmt->bind_param( 'issi', $matches[1], $date, $matches[2], $bugIsSecure );
-        $stmt->execute();
+        if (!$stmt->bind_param( 'issi', $matches[1], $date, $matches[2], $bugIsSecure )) {
+            fail( "Binding params failed for metadata: [{$stmt->error}]" );
+        }
+        if (!$stmt->execute()) {
+            fail( "Executing statement failed for metadata: [{$stmt->error}]" );
+        }
     }
 }
 
