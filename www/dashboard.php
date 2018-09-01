@@ -100,7 +100,7 @@ function stripWhitespace( $stuff ) {
 
 function buglink( $prefix, $bug ) {
     global $_BASE_URL, $meta_titles;
-    return '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=' . $bug . '" title="' . escapeHTML( $meta_titles[ $bug ] ) . '">' . $prefix . $bug . '</a>';
+    return '<a class="linkified" href="' . $_BASE_URL . '/show_bug.cgi?id=' . $bug . '" title="' . escapeHTML( safeGet( $meta_titles, $bug ) ) . '">' . $prefix . $bug . '</a>';
 }
 
 function linkify( $text, $bug ) {
