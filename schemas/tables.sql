@@ -76,6 +76,22 @@ CREATE TABLE `newbugs` (
     KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE `gh_issues` (
+    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `repo` varchar(255) NOT NULL,
+    `issue` int(10) unsigned NOT NULL,
+    `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
+    `reason` varchar(10) NOT NULL,
+    `commentnum` int(10) NOT NULL,
+    `author` varchar(255) NOT NULL,
+    `comment` mediumtext NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY (`repo`, `issue`),
+    KEY (`stamp`),
+    KEY (`viewed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 CREATE TABLE `metadata` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL DEFAULT 0,
