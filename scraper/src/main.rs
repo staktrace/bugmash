@@ -91,17 +91,9 @@ fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     let footer = footer.ok_or("Unable to find footer".to_string())?;
     let (repo, issue, commentnum) = url_parts(footer).ok_or("Unable to extract URL parts".to_string())?;
 
-    println!("Sender: {}", sender);
-    println!("Reason: {}", reason);
-    println!("Stamp: {}", stamp);
-    println!("Comment: {}", comment);
-    println!("Repo: {}", repo);
-    println!("Issue: {}", issue);
-    println!("CommentNum: {}", commentnum);
-
     let db = get_db()?;
     let result = db.prep_exec(r"INSERT INTO gh_issues (repo, issue, stamp, reason, commentnum, author, comment)
-                                VALUES (:repo, :issue, :stamp, :reason, :commentnum, :sender, :comment)", params! {
+                                VALUES (:repo, :issue, FROM_UNIXTIME(:stamp), :reason, :commentnum, :sender, :comment)", params! {
         repo,
         issue,
         stamp,
