@@ -1,0 +1,8 @@
+[package]
+name = "scraper"
+version = "0.1.0"
+authors = ["Kartikaya Gupta <kats@trevize.staktrace.com>"]
+
+[dependencies]
+mailparse = "0.6.2"
+mysql = "14.1.0"
