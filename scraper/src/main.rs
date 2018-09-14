@@ -8,12 +8,12 @@ use std::fs::File;
 use std::hash::Hasher;
 use std::io::{Read, stdin, Write};
 use std::process;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use mailparse::{dateparse, MailHeaderMap, MailParseError, ParsedMail};
 
 fn fail(data: &[u8], msg: &str, err: String) -> ! {
-    let time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    let time = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let mut hasher = DefaultHasher::new();
     hasher.write(data);
     let uniq_name = format!("{}.{:x}", time, hasher.finish());
