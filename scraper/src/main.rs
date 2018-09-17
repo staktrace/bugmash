@@ -80,6 +80,7 @@ fn split_footer(msg: String) -> (String, Option<String>) {
 fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     let sender = mail.headers.get_first_value("X-GitHub-Sender").map_err(|e| format!("{:?}", e))?.unwrap_or("Unknown".to_string());
     let reason = match mail.headers.get_first_value("X-GitHub-Reason").map_err(|e| format!("{:?}", e))? {
+        Some(ref s) if s == "review_requested" => "review",
         Some(ref s) if s == "mention" => "CC",
         _ => "Watch",
     };
