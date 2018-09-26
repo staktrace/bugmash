@@ -1,6 +1,7 @@
 <?php
 
 include_once( 'common.php' );
+date_default_timezone_set( 'UTC' );
 
 if (! isset( $_POST['q'] )) {
     header( 'Content-Type: text/html; charset=utf8' );

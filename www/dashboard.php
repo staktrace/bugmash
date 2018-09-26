@@ -311,7 +311,7 @@ foreach ($bblocks AS $bug => &$block) {
                     . '</div>',
                       (empty( $meta_secure[ $bug ] ) ? '' : 'secure '),
                       $bug,
-                      (in_array($bug, $bugsWithNotes) ? escapeHTML( $meta_notes[ $bug ] . ' | ' . $meta_tags[ $bug ] ) : ''),
+                      (in_array($bug, $bugsWithNotes) ? escapeHTML( safeGet( $meta_notes, $bug ) . ' | ' . safeGet( $meta_tags, $bug ) ) : ''),
                       $bug,
                       (in_array($bug, $bugsWithNotes) ? 'U' : 'N'),
                       $_BASE_URL,
