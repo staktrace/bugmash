@@ -13,7 +13,7 @@ if (mysqli_connect_errno()) {
 // handle note and tag updates
 //
 
-$stmt = $_DB->prepare( 'INSERT INTO metadata (bug, note) VALUES (?, ?) ON DUPLICATE KEY UPDATE note=VALUES(note)' );
+$stmt = $_DB->prepare( 'INSERT INTO metadata (bug, note, stamp) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE note=VALUES(note)' );
 if ($_DB->errno) fail( 'Error preparing metadata insert: ' . $_DB->error );
 foreach ($_POST AS $key => $value) {
     if (strncmp( $key, 'note', 4 ) == 0) {
