@@ -310,7 +310,7 @@ while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
     $bugid = $row['repo'] . '#' . $row['issue'];
     initEmpty( $bblocks, $bugid, $stamp );
-    if ($row['commentnum'] == 0) {
+    if ($row['hash'] == "") {
         $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">New: <a href="%s/%s/issues/%d">%s</a> by %s<br/>%s</div>',
                                                  $row['id'],
                                                  $_GH_BASE_URL,
@@ -320,13 +320,13 @@ while ($row = $result->fetch_assoc()) {
                                                  escapeHTML( $row['author'] ),
                                                  linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
     } else {
-        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/issues/%d#issuecomment-%d">said</a>:<br/>%s</div>',
+        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/issues/%d#%s">said</a>:<br/>%s</div>',
                                                  $row['id'],
                                                  escapeHTML( $row['author'] ),
                                                  $_GH_BASE_URL,
                                                  $row['repo'],
                                                  $row['issue'],
-                                                 $row['commentnum'],
+                                                 $row['hash'],
                                                  linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
     }
     $reasons[ $bugid ][] = $row['reason'];

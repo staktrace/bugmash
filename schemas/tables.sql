@@ -83,7 +83,7 @@ CREATE TABLE `gh_issues` (
     `stamp` datetime NOT NULL,
     `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `reason` varchar(10) NOT NULL,
-    `commentnum` int(10) NOT NULL,
+    `hash` varchar(255) NOT NULL,
     `author` varchar(255) NOT NULL,
     `comment` mediumtext NOT NULL,
     PRIMARY KEY (`id`),
