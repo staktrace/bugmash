@@ -55,19 +55,25 @@ fn get_plain_body(mail: &ParsedMail) -> Result<Option<String>, MailParseError> {
     Ok(None)
 }
 
-fn url_parts(footer: String) -> Option<(String, String, String)> {
+fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
     let prefix = "https://github.com/";
     let issues = "/issues/";
+    let pulls = "/pulls/";
     let comment = "#issuecomment-";
 
     let repo_ix = footer.find(prefix)? + prefix.len();
-    let issues_ix = footer[repo_ix..].find(issues)? + repo_ix;
-    let comment_ix = footer[issues_ix..].find(comment)? + issues_ix;
-    let end_ix = footer[comment_ix..].find("\r\n")? + comment_ix;
+    let issues_ix = footer[repo_ix..].find(issues).or_else(|| footer[repo_ix..].find(pulls))? + repo_ix;
+    let issues_len = if footer[issues_ix..].starts_with(issues) { issues.len() } else { pulls.len() };
+    let comment_ix = footer[issues_ix..].find(comment).map(|ix| ix + issues_ix);
+    let end_ix = footer[repo_ix..].find("\r\n")? + repo_ix;
+    let comment_num = match comment_ix {
+        Some(ix) => Some(String::from(&footer[ix + comment.len()..end_ix])),
+        None => None,
+    };
 
     return Some((String::from(&footer[repo_ix..issues_ix]),
-                 String::from(&footer[issues_ix + issues.len()..comment_ix]),
-                 String::from(&footer[comment_ix + comment.len()..end_ix])));
+                 String::from(&footer[issues_ix + issues_len..comment_ix.unwrap_or(end_ix)]),
+                 comment_num));
 }
 
 fn split_footer(msg: String) -> (String, Option<String>) {
@@ -91,6 +97,7 @@ fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     };
     let footer = footer.ok_or("Unable to find footer".to_string())?;
     let (repo, issue, commentnum) = url_parts(footer).ok_or("Unable to extract URL parts".to_string())?;
+    let commentnum = commentnum.unwrap_or(String::from("0"));
 
     let db = get_db()?;
     let result = db.prep_exec(r"INSERT INTO gh_issues (repo, issue, stamp, reason, commentnum, author, comment)

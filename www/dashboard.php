@@ -306,14 +306,25 @@ while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
     $bugid = $row['repo'] . '#' . $row['issue'];
     initEmpty( $bblocks, $bugid, $stamp );
-    $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/issues/%d#issuecomment-%d">said</a>:<br/>%s</div>',
-                                             $row['id'],
-                                             $row['author'],
-                                             $_GH_BASE_URL,
-                                             $row['repo'],
-                                             $row['issue'],
-                                             $row['commentnum'],
-                                             linkify_gh( escapeHTML( $row['comment'] ) ) ) . "\n";
+    if ($row['commentnum'] == 0) {
+        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">New: <a href="%s/%s/issues/%d">%s</a> by %s<br/>%s</div>',
+                                                 $row['id'],
+                                                 $_GH_BASE_URL,
+                                                 $row['repo'],
+                                                 $row['issue'],
+                                                 $bugid,
+                                                 escapeHTML( $row['author'] ),
+                                                 linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
+    } else {
+        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/issues/%d#issuecomment-%d">said</a>:<br/>%s</div>',
+                                                 $row['id'],
+                                                 escapeHTML( $row['author'] ),
+                                                 $_GH_BASE_URL,
+                                                 $row['repo'],
+                                                 $row['issue'],
+                                                 $row['commentnum'],
+                                                 linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
+    }
     $reasons[ $bugid ][] = $row['reason'];
 }
 
