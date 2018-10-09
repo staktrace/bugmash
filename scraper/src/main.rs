@@ -4,6 +4,7 @@ extern crate mysql;
 
 use std::collections::hash_map::DefaultHasher;
 use std::env;
+use std::fs;
 use std::fs::File;
 use std::hash::Hasher;
 use std::io::{Read, stdin, Write};
@@ -12,7 +13,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use mailparse::{dateparse, MailHeaderMap, MailParseError, ParsedMail};
 
-fn fail(data: &[u8], msg: &str, err: String) -> ! {
+fn save_file(data: &[u8]) -> String {
     let time = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let mut hasher = DefaultHasher::new();
     hasher.write(data);
@@ -21,7 +22,11 @@ fn fail(data: &[u8], msg: &str, err: String) -> ! {
         let mut file = File::create(&uniq_name).unwrap();
         file.write(data).ok();
     }
-    let err_name = format!("{}.err", uniq_name);
+    uniq_name
+}
+
+fn fail(data_file: &str, msg: &str, err: String) -> ! {
+    let err_name = format!("{}.err", data_file);
     {
         let mut file = File::create(err_name).unwrap();
         writeln!(file, "{}", msg).ok();
@@ -122,13 +127,15 @@ fn main() {
         let stdin = stdin();
         let mut handle = stdin.lock();
         let len = handle.read_to_end(&mut input);
-        len.err().map(|e| fail(&input, "Reading stdin failed", format!("{:?}", e)));
+        len.err().map(|e| fail("stdin-read", "Reading stdin failed", format!("{:?}", e)));
     }
 
-    let mail = mailparse::parse_mail(&input).unwrap_or_else(|e| fail(&input, "Unable to parse mail", format!("{:?}", e)));
+    let saved_file = save_file(&input);
+    let mail = mailparse::parse_mail(&input).unwrap_or_else(|e| fail(&saved_file, "Unable to parse mail", format!("{:?}", e)));
 
-    let github_reason = mail.headers.get_first_value("X-GitHub-Reason").unwrap_or_else(|e| fail(&input, "Unable to read mail header", format!("{:?}", e)));
+    let github_reason = mail.headers.get_first_value("X-GitHub-Reason").unwrap_or_else(|e| fail(&saved_file, "Unable to read mail header", format!("{:?}", e)));
     if github_reason.is_some() {
-        return scrape_github_mail(&mail).unwrap_or_else(|e| fail(&input, "Error while scraping mail", e));
+        scrape_github_mail(&mail).unwrap_or_else(|e| fail(&saved_file, "Error while scraping mail", e));
+        fs::remove_file(&saved_file).unwrap_or_else(|e| fail(&saved_file, "Error removing file after processing", format!("{:?}", e)));
     }
 }
