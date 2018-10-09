@@ -3,6 +3,7 @@
 include_once( 'common.php' );
 
 date_default_timezone_set( 'UTC' );
+$_GH_BASE_URL = "https://github.com/";
 
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
@@ -109,6 +110,10 @@ function linkify( $text, $bug ) {
     $text = preg_replace( '/(bug\s+)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
     $text = preg_replace( '/(bug-)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
     $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/attachment.cgi?id=$2">$1$2</a>', $text );
+    return $text;
+}
+
+function linkify_gh( $text ) {
     return $text;
 }
 
@@ -295,34 +300,58 @@ while ($row = $result->fetch_assoc()) {
     $reasons[ $row['bug'] ][] = $row['reason'];
 }
 
+$result = loadTable( 'gh_issues' );
+while ($row = $result->fetch_assoc()) {
+    $numRows++;
+    $stamp = strtotime( $row['stamp'] );
+    $bugid = $row['repo'] . '#' . $row['issue'];
+    initEmpty( $bblocks, $bugid, $stamp );
+    $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/issues/%d#issuecomment-%d">said</a>:<br/>%s</div>',
+                                             $row['id'],
+                                             $row['author'],
+                                             $_GH_BASE_URL,
+                                             $row['repo'],
+                                             $row['issue'],
+                                             $row['commentnum'],
+                                             linkify_gh( escapeHTML( $row['comment'] ) ) ) . "\n";
+    $reasons[ $bugid ][] = $row['reason'];
+}
+
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $block = sprintf( '<div class="%sbug" id="bug%d"><div class="title">'
+    if (strpos( $bug, '#' ) !== FALSE) {
+        $type_gh = true;
+        $identifier = 'gh_' . $bug;
+    } else {
+        $type_gh = false;
+        $identifier = 'bug' . $bug;
+    }
+    $block = sprintf( '<div class="%sbug" id="%s"><div class="title">'
                     . '<a class="wipe" href="#">X&nbsp;</a>'
                     . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, %d)">%s</a>'
-                    . '<a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s'
+                    . '<a href="%s">%s</a> %s'
                     . '</div>'
                     . '<div>%s</div>'
                     . '<div class="footer">'
-                    . '<a class="wipetop" href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'bug%d\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'bug%d\').offsetTop,window.scrollY)); wipe(event); return false">X&nbsp;</a>'
-                    . '<a href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'bug%d\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'bug%d\').offsetTop,window.scrollY));return false">Back to top</a>'
+                    . '<a class="wipetop" href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'%s\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'%s\').offsetTop,window.scrollY)); wipe(event); return false">X&nbsp;</a>'
+                    . '<a href="#" onclick="window.scrollTo(Math.min(document.getElementById(\'%s\').offsetLeft,window.scrollX),Math.min(document.getElementById(\'%s\').offsetTop,window.scrollY));return false">Back to top</a>'
                     . '</div>'
                     . '</div>',
                       (empty( $meta_secure[ $bug ] ) ? '' : 'secure '),
-                      $bug,
+                      $identifier,
                       (in_array($bug, $bugsWithNotes) ? escapeHTML( safeGet( $meta_notes, $bug ) . ' | ' . safeGet( $meta_tags, $bug ) ) : ''),
                       $bug,
                       (in_array($bug, $bugsWithNotes) ? 'U' : 'N'),
-                      $_BASE_URL,
-                      $bug,
-                      $bug,
-                      escapeHTML( safeGet( $meta_titles, $bug ) ),
+                      $type_gh ? ($_GH_BASE_URL . str_replace( '#', '/issues/', $bug ))
+                               : ($_BASE_URL . '/show_bug.cgi?id=' . $bug),
+                      $type_gh ? $bug : 'Bug ' . $bug,
+                      $type_gh ? '' : escapeHTML( safeGet( $meta_titles, $bug ) ),
                       implode( "\n", $block ),
-                      $bug,
-                      $bug,
-                      $bug,
-                      $bug ) . "\n";
+                      $identifier,
+                      $identifier,
+                      $identifier,
+                      $identifier ) . "\n";
     $col = column( $reasons[ $bug ] );
     initEmpty( $columns, $col, $touchTime );
     $columns[ $col ][ $touchTime ] .= $block;

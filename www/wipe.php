@@ -29,6 +29,9 @@ foreach ($ids AS $id) {
         case 'c':
             $table = 'comments';
             break;
+        case 'g':
+            $table = 'gh_issues';
+            break;
     }
     $rowId = intval( substr( $id, 1 ) );
     $_DB->query( "UPDATE {$table} SET viewed=1 WHERE id={$rowId}" );
