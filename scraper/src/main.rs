@@ -70,7 +70,7 @@ fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
     let issues_ix = footer[repo_ix..].find(issues).or_else(|| footer[repo_ix..].find(pull))? + repo_ix;
     let issues_len = if footer[issues_ix..].starts_with(issues) { issues.len() } else { pull.len() };
     let hash_ix = footer[issues_ix..].find(hash).map(|ix| ix + issues_ix);
-    let end_ix = footer[repo_ix..].find("\n")? + repo_ix;
+    let end_ix = footer[repo_ix..].find("\n").map(|ix| ix + repo_ix).unwrap_or(footer.len());
     let hash = match hash_ix {
         Some(ix) => Some(String::from(&footer[ix + hash.len()..end_ix])),
         None => None,
@@ -82,7 +82,10 @@ fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
 }
 
 fn split_footer(msg: String) -> (String, Option<String>) {
-    match msg.find("\n-- \nYou are receiving this because") {
+    // Avoid trying to match newlines directly since they can be either \r\n or \n
+    let ix = msg.find("You are receiving this because")
+                .and_then(|ix| msg[0..ix].rfind("-- "));
+    match ix {
         Some(ix) => (String::from(&msg[0..ix]), Some(String::from(&msg[ix..]))),
         None => (msg, None),
     }
