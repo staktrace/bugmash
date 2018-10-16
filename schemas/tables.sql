@@ -11,7 +11,7 @@ CREATE TABLE `requests` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `reviews` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -29,7 +29,7 @@ CREATE TABLE `reviews` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `changes` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -44,7 +44,7 @@ CREATE TABLE `changes` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `comments` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -59,7 +59,7 @@ CREATE TABLE `comments` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `newbugs` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -74,11 +74,11 @@ CREATE TABLE `newbugs` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `gh_issues` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-    `repo` varchar(255) NOT NULL,
+    `repo` varchar(100) NOT NULL,
     `issue` int(10) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
     `viewed` tinyint(1) NOT NULL DEFAULT 0,
@@ -90,7 +90,7 @@ CREATE TABLE `gh_issues` (
     KEY (`repo`, `issue`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `metadata` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -101,13 +101,13 @@ CREATE TABLE `metadata` (
     `note` mediumtext NOT NULL DEFAULT '',
     PRIMARY KEY (`id`),
     UNIQUE KEY (`bug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `tags` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` int(10) unsigned NOT NULL,
-    `tag` varchar(255) NOT NULL,
+    `tag` varchar(100) NOT NULL,
     PRIMARY KEY (`id`),
     KEY (`bug`),
     KEY (`tag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
