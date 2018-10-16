@@ -320,11 +320,12 @@ while ($row = $result->fetch_assoc()) {
                                                  escapeHTML( $row['author'] ),
                                                  linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
     } else {
-        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/issues/%d#%s">said</a>:<br/>%s</div>',
+        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">%s <a href="%s/%s/%s/%d%s">said</a>:<br/>%s</div>',
                                                  $row['id'],
                                                  escapeHTML( $row['author'] ),
                                                  $_GH_BASE_URL,
                                                  $row['repo'],
+                                                 (strncmp( $row['hash'], '#', 1 ) == 0 ? 'issues' : 'pull'),
                                                  $row['issue'],
                                                  $row['hash'],
                                                  linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
