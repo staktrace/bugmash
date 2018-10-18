@@ -74,12 +74,12 @@ fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
     let hash_ix = footer[issuenum_ix..].find(hash).or_else(|| footer[issuenum_ix..].find(slash)).map(|ix| ix + issuenum_ix);
     let end_ix = footer[repo_ix..].find("\n").map(|ix| ix + repo_ix).unwrap_or(footer.len());
     let hash = match hash_ix {
-        Some(ix) => Some(String::from(&footer[ix..end_ix])),
+        Some(ix) => Some(String::from(footer[ix..end_ix].trim())),
         None => None,
     };
 
     return Some((String::from(&footer[repo_ix..issues_ix]),
-                 String::from(&footer[issuenum_ix..hash_ix.unwrap_or(end_ix)]),
+                 String::from(footer[issuenum_ix..hash_ix.unwrap_or(end_ix)].trim()),
                  hash));
 }
 
