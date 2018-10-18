@@ -115,7 +115,7 @@ function linkify( $text, $bug ) {
 
 function linkify_gh( $text, $base_repo ) {
     global $_GH_BASE_URL;
-    $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
+    $text = preg_replace( '#\[(.*?)\]\((https?://.*?)\)#i', '<a class="linkified" href="$2">$1</a>', $text );   // markdown links
     $text = preg_replace( '@(\W)(\w+/\w+)#(\d+)(\W)@', '$1<a class="linkified" href="' . $_GH_BASE_URL . '$2/issues/$3">$2#$3</a>$4', $text );
     $text = preg_replace( '@(\W)#(\d+)(\W)@', '$1<a class="linkified" href="' . $_GH_BASE_URL . $base_repo . '/issues/$2">#$2</a>$3', $text );
     return $text;
