@@ -406,7 +406,7 @@ function updateMetadata( $date ) {
         $stmt = prepare( 'INSERT INTO metadata (bug, stamp, title, secure, note) VALUES (?, ?, ?, ?, ?) '
                        . 'ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)' );
         $note = "";
-        if (!$stmt->bind_param( 'issis', $matches[1], $date, $matches[2], $bugIsSecure, $note )) {
+        if (!$stmt->bind_param( 'sssis', $matches[1], $date, $matches[2], $bugIsSecure, $note )) {
             fail( "Binding params failed for metadata: [{$stmt->error}]" );
         }
         if (!$stmt->execute()) {

@@ -18,7 +18,7 @@ $stmt = $_DB->prepare( 'INSERT INTO metadata (bug, note, stamp) VALUES (?, ?, NO
 if ($_DB->errno) fail( 'Error preparing metadata insert: ' . $_DB->error );
 foreach ($_POST AS $key => $value) {
     if (strncmp( $key, 'note', 4 ) == 0) {
-        $stmt->bind_param( 'is', intval( substr( $key, 4 ) ), trim( $value ) );
+        $stmt->bind_param( 'ss', substr( $key, 4 ), trim( $value ) );
         $stmt->execute();
     }
 }

@@ -94,7 +94,7 @@ CREATE TABLE `gh_issues` (
 
 CREATE TABLE `metadata` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-    `bug` int(10) unsigned NOT NULL DEFAULT 0,
+    `bug` varchar(128) unsigned NOT NULL,
     `stamp` datetime NOT NULL,
     `title` varchar(1024) NOT NULL DEFAULT '',
     `secure` tinyint(1) NOT NULL DEFAULT 0,
