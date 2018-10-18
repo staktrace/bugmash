@@ -20,6 +20,7 @@ foreach ($_POST AS $key => $value) {
     if (strncmp( $key, 'note', 4 ) == 0) {
         $stmt->bind_param( 'ss', substr( $key, 4 ), trim( $value ) );
         $stmt->execute();
+        if ($stmt->errno) fail( 'Error inserting to metadata: ' . $stmt->error );
     }
 }
 $stmt->close();
@@ -27,7 +28,7 @@ $stmt->close();
 $tagUpdates = array();
 foreach ($_POST AS $key => $value) {
     if (strncmp( $key, 'tags', 4 ) == 0) {
-        $tagUpdates[ intval( substr( $key, 4 ) ) ] = $value;
+        $tagUpdates[ substr( $key, 4 ) ] = $value;
     }
 }
 updateTags( $tagUpdates );
@@ -345,7 +346,7 @@ foreach ($bblocks AS $bug => &$block) {
     }
     $block = sprintf( '<div class="%sbug" id="%s"><div class="title">'
                     . '<a class="wipe" href="#">X&nbsp;</a>'
-                    . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, %d)">%s</a>'
+                    . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, \'%s\')">%s</a>'
                     . '<a href="%s">%s</a> %s'
                     . '</div>'
                     . '<div>%s</div>'
@@ -504,13 +505,14 @@ a.linkified:hover {
         }
     }, true );
 
-    function addNote( bugnumber ) {
+    function addNote( bugid ) {
         var notediv = document.createElement( "div" );
         notediv.className = "newnote";
         var sibling = document.getElementById( "notebuttons" );
         sibling.parentNode.insertBefore( notediv, sibling );
-        notediv.innerHTML = '<span>Bug <input type="text" size="7" maxlength="10" value="' + bugnumber + '"/></span>: <input class="noteinput" type="text"/><input class="tagsinput" type="text""/>';
-        if (bugnumber) {
+        var prefix = bugid.includes( '#' ) ? '' : 'Bug ';
+        notediv.innerHTML = '<span>' + prefix + '<input type="text" size="12" maxlength="128" value="' + bugid + '"/></span>: <input class="noteinput" type="text"/><input class="tagsinput" type="text""/>';
+        if (bugid) {
             notediv.getElementsByTagName( "input" )[1].focus();
         } else {
             notediv.getElementsByTagName( "input" )[0].focus();
@@ -522,29 +524,39 @@ a.linkified:hover {
         while (newnotes.length > 0) {
             var newnote = newnotes[0];
             var bugnumbertext = newnote.getElementsByTagName( "input" )[0].value;
-            var bugnumber = parseInt( bugnumbertext );
-            if (isNaN( bugnumber )) {
-                if (window.confirm( "Unable to parse " + bugnumbertext + " as a bug number; replace with 0 and continue anyway?" )) {
-                    bugnumber = 0;
-                } else {
-                    return false;
+            var bugid;
+            if (bugnumbertext.includes("#")) {
+                // GH issue
+                bugid = bugnumbertext;
+                var anchor = document.createElement( "a" );
+                anchor.setAttribute( "href", "<?php echo $_GH_BASE_URL; ?>" + bugnumbertext.replace( '#', '/issues' ) );
+                anchor.textContent = bugnumbertext;
+            } else {
+                // bugzilla bug
+                bugid = parseInt( bugnumbertext );
+                if (isNaN( bugid )) {
+                    if (window.confirm( "Unable to parse " + bugnumbertext + " as a bug number; replace with 0 and continue anyway?" )) {
+                        bugid = 0;
+                    } else {
+                        return false;
+                    }
                 }
+                var anchor = document.createElement( "a" );
+                anchor.setAttribute( "href", "<?php echo $_BASE_URL; ?>/show_bug.cgi?id=" + bugid );
+                anchor.textContent = "Bug " + bugid;
             }
-            var anchor = document.createElement( "a" );
-            anchor.setAttribute( "href", "<?php echo $_BASE_URL; ?>/show_bug.cgi?id=" + bugnumber );
-            anchor.textContent = "Bug " + bugnumber;
             newnote.replaceChild( anchor, newnote.getElementsByTagName( "span" )[0] );
-            newnote.getElementsByTagName( "input" )[0].setAttribute( "name", "note" + bugnumber );
-            newnote.getElementsByTagName( "input" )[1].setAttribute( "name", "tags" + bugnumber );
+            newnote.getElementsByTagName( "input" )[0].setAttribute( "name", "note" + bugid );
+            newnote.getElementsByTagName( "input" )[1].setAttribute( "name", "tags" + bugid );
             newnote.className = "note";
         }
         return true;
     }
 
-    function noteify( linkElement, bugnumber ) {
+    function noteify( linkElement, bugid ) {
         var notes = document.getElementsByClassName( "note" );
         // see if we can find a note already for this bug and just give it focus
-        var search = "Bug " + bugnumber;
+        var search = bugid.includes("#") ? bugid : "Bug " + bugid;
         for (var i = 0; i < notes.length; i++) {
             if (notes[i].firstChild.textContent == search) {
                 notes[i].getElementsByTagName( "input" )[0].focus();
@@ -554,13 +566,13 @@ a.linkified:hover {
         // also search through the newly-added notes that are in a different format
         notes = document.getElementsByClassName( "newnote" );
         for (var i = 0; i < notes.length; i++) {
-            if (notes[i].getElementsByTagName( "input" )[0].value == bugnumber) {
+            if (notes[i].getElementsByTagName( "input" )[0].value == bugid) {
                 notes[i].getElementsByTagName( "input" )[1].focus();
                 return false;
             }
         }
         // couldn't find it, so add a new one
-        addNote( bugnumber );
+        addNote( bugid );
         linkElement.textContent = 'U';
         return false;
     }
@@ -585,19 +597,24 @@ for ($i = 0; $i < 4; $i++) {
    <fieldset>
     <legend>Bug notes</legend>
 <?php
-foreach ($bugsWithNotes AS $bug) {
-    echo sprintf( '    <div class="note"><a href="%s/show_bug.cgi?id=%d">Bug %d</a>: '
-                . '<input class="noteinput" type="text" name="note%d" value="%s"/>'
-                . '<input class="tagsinput" type="text" name="tags%d" value="%s"/> '
+foreach ($bugsWithNotes AS $bugid) {
+    if (strpos( $bugid, '#' ) !== FALSE) {
+        $type_gh = true;
+    } else {
+        $type_gh = false;
+    }
+    echo sprintf( '    <div class="note"><a href="%s">%s</a>: '
+                . '<input class="noteinput" type="text" name="note%s" value="%s"/>'
+                . '<input class="tagsinput" type="text" name="tags%s" value="%s"/> '
                 . '%s</div>',
-                  $_BASE_URL,
-                  $bug,
-                  $bug,
-                  $bug,
-                  escapeHTML( safeGet( $meta_notes, $bug ) ),
-                  $bug,
-                  escapeHTML( safeGet( $meta_tags, $bug ) ),
-                  escapeHTML( safeGet( $meta_titles, $bug ) ) ),
+                  $type_gh ? ($_GH_BASE_URL . str_replace( '#', '/issues/', $bugid ))
+                           : ($_BASE_URL . '/show_bug.cgi?id=' . $bugid),
+                  $type_gh ? $bugid : "Bug " . $bugid,
+                  $bugid,
+                  escapeHTML( safeGet( $meta_notes, $bugid ) ),
+                  $bugid,
+                  escapeHTML( safeGet( $meta_tags, $bugid ) ),
+                  escapeHTML( safeGet( $meta_titles, $bugid ) ) ),
         "\n";
 }
 ?>

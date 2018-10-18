@@ -13,6 +13,7 @@ if (get_magic_quotes_gpc()) {
 }
 
 function fail( $message ) {
+    error_log( $message );
     header( 'HTTP/500 Error!' );
     print $message;
     exit( 0 );
@@ -27,8 +28,9 @@ function updateTags( $newTags ) {
     $stmt = $_DB->prepare( 'DELETE FROM tags WHERE bug=?' );
     if ($_DB->errno) fail( 'Error preparing tag deletion: ' . $_DB->error );
     foreach ($newTags AS $bug => $tagList) {
-        $stmt->bind_param( 'i', $bug );
+        $stmt->bind_param( 's', $bug );
         $stmt->execute();
+        if ($stmt->errno) fail( 'Error inserting to metadata: ' . $stmt->error );
     }
     $stmt->close();
 
@@ -38,8 +40,9 @@ function updateTags( $newTags ) {
         foreach (explode( ',', $tagList ) AS $tag) {
             $tag = trim( $tag );
             if (strlen( $tag ) > 0) {
-                $stmt->bind_param( 'is', $bug, $tag );
+                $stmt->bind_param( 'ss', $bug, $tag );
                 $stmt->execute();
+                if ($stmt->errno) fail( 'Error inserting to metadata: ' . $stmt->error );
             }
         }
     }

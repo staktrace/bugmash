@@ -105,7 +105,7 @@ CREATE TABLE `metadata` (
 
 CREATE TABLE `tags` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-    `bug` int(10) unsigned NOT NULL,
+    `bug` varchar(128) NOT NULL,
     `tag` varchar(100) NOT NULL,
     PRIMARY KEY (`id`),
     KEY (`bug`),
