@@ -94,6 +94,19 @@ fn split_footer(msg: String) -> (String, Option<String>) {
 }
 
 fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
+    let mut title = mail.headers.get_first_value("Subject").map_err(|e| format!("{:?}", e))?.unwrap_or("(no subject)".to_string());
+    title = title.trim_left_matches("Re: ").to_string();
+    if title.starts_with("[") {
+        if let Some(close_bracket) = title.find("]") {
+            title = title[close_bracket + 1..].trim().to_string();
+        }
+    }
+    if title.ends_with(")") {
+        if let Some(issue_start) = title.rfind("(#") {
+            title = title[0..issue_start].trim().to_string();
+        }
+    }
+
     let sender = mail.headers.get_first_value("X-GitHub-Sender").map_err(|e| format!("{:?}", e))?.unwrap_or("Unknown".to_string());
     let reason = match mail.headers.get_first_value("X-GitHub-Reason").map_err(|e| format!("{:?}", e))? {
         Some(ref s) if s == "review_requested" => "review",
@@ -110,9 +123,18 @@ fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     let (repo, issue, hash) = url_parts(footer).ok_or("Unable to extract URL parts".to_string())?;
     let hash = hash.unwrap_or(String::from(""));
 
+    let id = format!("{}#{}", repo, issue);
     let db = get_db()?;
-    let result = db.prep_exec(r"INSERT INTO gh_issues (repo, issue, stamp, reason, hash, author, comment)
-                                VALUES (:repo, :issue, FROM_UNIXTIME(:stamp), :reason, :hash, :sender, :comment)", params! {
+    db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
+                                 VALUES (:id, FROM_UNIXTIME(:stamp), :title, 0, "")
+                                 ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title)"#, params! {
+        id,
+        stamp,
+        title,
+    }).map_err(|e| format!("{:?}", e))?;
+
+    let result = db.prep_exec(r#"INSERT INTO gh_issues (repo, issue, stamp, reason, hash, author, comment)
+                                 VALUES (:repo, :issue, FROM_UNIXTIME(:stamp), :reason, :hash, :sender, :comment)"#, params! {
         repo,
         issue,
         stamp,
@@ -122,8 +144,9 @@ fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
         comment,
     }).map_err(|e| format!("{:?}", e))?;
     if result.affected_rows() != 1 {
-        return Err(format!("Affected row count was {}, not 1", result.affected_rows()));
+        return Err(format!("Affected row count for gh_issues was {}, not 1", result.affected_rows()));
     }
+
     Ok(())
 }
 

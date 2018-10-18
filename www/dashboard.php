@@ -316,7 +316,7 @@ while ($row = $result->fetch_assoc()) {
                                                  $_GH_BASE_URL,
                                                  $row['repo'],
                                                  $row['issue'],
-                                                 $bugid,
+                                                 escapeHTML( safeGet( $meta_titles, $bugid ) ),
                                                  escapeHTML( $row['author'] ),
                                                  linkify_gh( escapeHTML( $row['comment'] ), $row['repo'] ) ) . "\n";
     } else {
@@ -362,7 +362,7 @@ foreach ($bblocks AS $bug => &$block) {
                       $type_gh ? ($_GH_BASE_URL . str_replace( '#', '/issues/', $bug ))
                                : ($_BASE_URL . '/show_bug.cgi?id=' . $bug),
                       $type_gh ? $bug : 'Bug ' . $bug,
-                      $type_gh ? '' : escapeHTML( safeGet( $meta_titles, $bug ) ),
+                      escapeHTML( safeGet( $meta_titles, $bug ) ),
                       implode( "\n", $block ),
                       $identifier,
                       $identifier,
