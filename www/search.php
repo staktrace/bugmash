@@ -238,10 +238,8 @@ foreach ($timestamps AS $bug => $stamp) {
     if (! $formattedTitle) {
         $formattedTitle = escapeHTML( $meta_titles[ $bug ] );
     }
-    echo sprintf( '   <div class="title"><a href="%s/show_bug.cgi?id=%d">Bug %d</a> %s</div>',
-                  $_BASE_URL,
-                  $bug,
-                  $bug,
+    echo sprintf( '   <div class="title">%s %s</div>',
+                  makeBugLink( $bug ),
                   $formattedTitle ), "\n";
     foreach ($hits AS $hit) {
         echo '   <div class="row">', $hit, '</div>', "\n";
