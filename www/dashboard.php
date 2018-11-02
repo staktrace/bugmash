@@ -3,7 +3,6 @@
 include_once( 'common.php' );
 
 date_default_timezone_set( 'UTC' );
-$_GH_BASE_URL = "https://github.com/";
 
 $_DB = new mysqli( $_MYSQL_HOST, $_MYSQL_USER, $_MYSQL_PASS, $_MYSQL_DB );
 if (mysqli_connect_errno()) {
@@ -337,17 +336,11 @@ while ($row = $result->fetch_assoc()) {
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    if (strpos( $bug, '#' ) !== FALSE) {
-        $type_gh = true;
-        $identifier = 'gh_' . $bug;
-    } else {
-        $type_gh = false;
-        $identifier = 'bug' . $bug;
-    }
+    $identifier = (isGithubIssue( $bug ) ? 'gh_' : 'bug') . $bug;
     $block = sprintf( '<div class="%sbug" id="%s"><div class="title">'
                     . '<a class="wipe" href="#">X&nbsp;</a>'
                     . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, \'%s\')">%s</a>'
-                    . '<a href="%s">%s</a> %s'
+                    . '%s %s'
                     . '</div>'
                     . '<div>%s</div>'
                     . '<div class="footer">'
@@ -360,9 +353,7 @@ foreach ($bblocks AS $bug => &$block) {
                       (in_array($bug, $bugsWithNotes) ? escapeHTML( safeGet( $meta_notes, $bug ) . ' | ' . safeGet( $meta_tags, $bug ) ) : ''),
                       $bug,
                       (in_array($bug, $bugsWithNotes) ? 'U' : 'N'),
-                      $type_gh ? ($_GH_BASE_URL . str_replace( '#', '/issues/', $bug ))
-                               : ($_BASE_URL . '/show_bug.cgi?id=' . $bug),
-                      $type_gh ? $bug : 'Bug ' . $bug,
+		      makeBugLink( $bug ),
                       escapeHTML( safeGet( $meta_titles, $bug ) ),
                       implode( "\n", $block ),
                       $identifier,
@@ -598,18 +589,11 @@ for ($i = 0; $i < 4; $i++) {
     <legend>Bug notes</legend>
 <?php
 foreach ($bugsWithNotes AS $bugid) {
-    if (strpos( $bugid, '#' ) !== FALSE) {
-        $type_gh = true;
-    } else {
-        $type_gh = false;
-    }
-    echo sprintf( '    <div class="note"><a href="%s">%s</a>: '
+    echo sprintf( '    <div class="note">%s: '
                 . '<input class="noteinput" type="text" name="note%s" value="%s"/>'
                 . '<input class="tagsinput" type="text" name="tags%s" value="%s"/> '
                 . '%s</div>',
-                  $type_gh ? ($_GH_BASE_URL . str_replace( '#', '/issues/', $bugid ))
-                           : ($_BASE_URL . '/show_bug.cgi?id=' . $bugid),
-                  $type_gh ? $bugid : "Bug " . $bugid,
+		  makeBugLink( $bugid ),
                   $bugid,
                   escapeHTML( safeGet( $meta_notes, $bugid ) ),
                   $bugid,

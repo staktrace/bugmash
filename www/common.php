@@ -21,6 +21,7 @@ function fail( $message ) {
 
 $BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../scraper';
 include_once( $BUGMASH_DIR . '/config.php' );
+$_GH_BASE_URL = "https://github.com/";
 
 function updateTags( $newTags ) {
     global $_DB;
@@ -53,6 +54,24 @@ function escapeHTML( $stuff ) {
     $stuff = str_replace( '&', '&amp;', $stuff );
     $stuff = str_replace( array( '<', '>', '"' ), array( '&lt;', '&gt;', '&quot;' ), $stuff );
     return $stuff;
+}
+
+function isGithubIssue( $bugid ) {
+    return (strpos( $bugid, '#' ) !== FALSE);
+}
+
+function makeBugLink( $bugid ) {
+    global $_BASE_URL, $_GH_BASE_URL;
+
+    if (isGithubIssue( $bugid )) {
+	return sprintf( '<a href="%s">%s</a>',
+                        $_GH_BASE_URL . str_replace( '#', '/issues/', $bugid ),
+		        $bugid);
+    } else {
+        return sprintf( '<a href="%s">%s</a>',
+                        $_BASE_URL . '/show_bug.cgi?id=' . $bugid,
+		        "Bug " . $bugid);
+    }
 }
 
 ?>
