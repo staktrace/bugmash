@@ -85,7 +85,7 @@ fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
 
 fn split_footer(msg: String) -> (String, Option<String>) {
     // Avoid trying to match newlines directly since they can be either \r\n or \n
-    let ix = msg.find("You are receiving this because")
+    let ix = msg.rfind("You are receiving this because")
                 .and_then(|ix| msg[0..ix].rfind("-- "));
     match ix {
         Some(ix) => (String::from(&msg[0..ix]), Some(String::from(&msg[ix..]))),
