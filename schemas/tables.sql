@@ -79,7 +79,7 @@ CREATE TABLE `newbugs` (
 CREATE TABLE `gh_issues` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `repo` varchar(100) NOT NULL,
-    `issue` int(10) unsigned NOT NULL,
+    `issue` varchar(40) NOT NULL,
     `stamp` datetime NOT NULL,
     `viewed` tinyint(1) NOT NULL DEFAULT 0,
     `reason` varchar(10) NOT NULL,

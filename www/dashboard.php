@@ -312,10 +312,11 @@ while ($row = $result->fetch_assoc()) {
     $bugid = $row['repo'] . '#' . $row['issue'];
     initEmpty( $bblocks, $bugid, $stamp );
     if ($row['hash'] == "") {
-        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">New: <a href="%s/%s/issues/%d">%s</a> by %s<br/>%s</div>',
+        $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="g%d">New: <a href="%s/%s/%s/%s">%s</a> by %s<br/>%s</div>',
                                                  $row['id'],
                                                  $_GH_BASE_URL,
                                                  $row['repo'],
+						 strlen( $row['issue'] ) == 40 ? 'commit' : 'issues',
                                                  $row['issue'],
                                                  escapeHTML( safeGet( $meta_titles, $bugid ) ),
                                                  escapeHTML( $row['author'] ),

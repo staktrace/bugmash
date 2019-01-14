@@ -60,12 +60,17 @@ function isGithubIssue( $bugid ) {
     return (strpos( $bugid, '#' ) !== FALSE);
 }
 
+function isGithubCommit( $bugid ) {
+    return (strlen( $bugid ) - strpos( $bugid, '#' )) >= 40;
+}
+
 function makeBugLink( $bugid ) {
     global $_BASE_URL, $_GH_BASE_URL;
 
     if (isGithubIssue( $bugid )) {
+	$type = isGithubCommit( $bugid ) ? '/commit/' : '/issues/';
 	return sprintf( '<a href="%s">%s</a>',
-                        $_GH_BASE_URL . str_replace( '#', '/issues/', $bugid ),
+                        $_GH_BASE_URL . str_replace( '#', $type, $bugid ),
 		        $bugid);
     } else {
         return sprintf( '<a href="%s">%s</a>',

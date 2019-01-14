@@ -62,14 +62,25 @@ fn get_plain_body(mail: &ParsedMail) -> Result<Option<String>, MailParseError> {
 
 fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
     let prefix = "https://github.com/";
-    let issues = "/issues/";
-    let pull = "/pull/";
+    let types = ["/issues/", "/pull/", "/commit/"];
     let hash = "#";
     let slash = "/";
 
     let repo_ix = footer.find(prefix)? + prefix.len();
-    let issues_ix = footer[repo_ix..].find(issues).or_else(|| footer[repo_ix..].find(pull))? + repo_ix;
-    let issues_len = if footer[issues_ix..].starts_with(issues) { issues.len() } else { pull.len() };
+    let mut issues_ix = None;
+    let mut issues_len = None;
+    for t in types.iter() {
+        match footer[repo_ix..].find(t) {
+            Some(x) => {
+                issues_ix = Some(x);
+                issues_len = Some(t.len());
+                break;
+            }
+            None => continue,
+        }
+    }
+    let issues_ix = issues_ix? + repo_ix;
+    let issues_len = issues_len.unwrap();
     let issuenum_ix = issues_ix + issues_len;
     let hash_ix = footer[issuenum_ix..].find(hash).or_else(|| footer[issuenum_ix..].find(slash)).map(|ix| ix + issuenum_ix);
     let end_ix = footer[repo_ix..].find("\n").map(|ix| ix + repo_ix).unwrap_or(footer.len());
