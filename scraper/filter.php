@@ -177,7 +177,8 @@ function normalizeFieldList( $fieldString ) {
             || $word == 'Last' /* Resolved */
             || $word == 'QA' /* Whiteboard */
             || $word == 'Restrict' /* Comments */
-            || $word == 'Due' /* Date */)
+            || $word == 'Due' /* Date */
+            || $word == 'Fission' /* Milestone */)
         {
             if ($i + 1 >= count( $words )) {
                 fail( 'Unrecognized field list (4): ' . print_r( $words, true ) );
