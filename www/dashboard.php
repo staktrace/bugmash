@@ -123,7 +123,7 @@ function linkify_gh( $text, $base_repo ) {
 
 function buglinkify( $field, $text ) {
     global $_BASE_URL;
-    if ($field === 'Depends on' || $field === 'Blocks' || $field === 'Regressions') {
+    if ($field === 'Depends on' || $field === 'Blocks' || $field === 'Regressions' || $field === 'Regressed by') {
         $text = preg_replace( '/(\d+)/e', 'buglink(\'\', \'\\1\')', $text );
     }
     return $text;
