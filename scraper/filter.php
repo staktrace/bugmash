@@ -178,8 +178,9 @@ function normalizeFieldList( $fieldString ) {
             || $word == 'QA' /* Whiteboard */
             || $word == 'Restrict' /* Comments */
             || $word == 'Due' /* Date */
-	    || $word == 'Fission' /* Milestone */
-            || $word == 'Regressed' /* by */)
+            || $word == 'Fission' /* Milestone */
+            || $word == 'Regressed' /* by */
+            || $word == 'Webcompat' /* Priority */)
         {
             if ($i + 1 >= count( $words )) {
                 fail( 'Unrecognized field list (4): ' . print_r( $words, true ) );
