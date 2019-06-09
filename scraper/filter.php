@@ -222,6 +222,8 @@ function normalizeFieldList( $fieldString ) {
             $word = 'Whiteboard';
         } else if ($word == 'QAContact') {
             $word = 'QA Contact';
+        } else if ($word == 'Last Resolved') {
+            $word = 'Closed';
         }
         $fields[] = $word;
     }
@@ -257,7 +259,7 @@ function parseChangeTable( $fields, $rows ) {
                 $fields[ $ixField ] = preg_replace( '/(Attachment #\d+).*/', '\1', $col1 ) . substr( $fields[ $ixField ], strlen( 'Attachment' ));
                 $matchedStart = true;
             }
-	} else if (stripos( $fields[ $ixField ], $col1 ) === 0) {
+        } else if (stripos( $fields[ $ixField ], $col1 ) === 0) {
             // simple case match the start of the field against the column
             $matchedStart = true;
         }
