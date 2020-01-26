@@ -106,7 +106,7 @@ fn split_footer(msg: String) -> (String, Option<String>) {
 
 fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     let mut title = mail.headers.get_first_value("Subject").map_err(|e| format!("{:?}", e))?.unwrap_or("(no subject)".to_string());
-    title = title.trim_left_matches("Re: ").to_string();
+    title = title.trim_start_matches("Re: ").to_string();
     if title.starts_with("[") {
         if let Some(close_bracket) = title.find("]") {
             title = title[close_bracket + 1..].trim().to_string();
