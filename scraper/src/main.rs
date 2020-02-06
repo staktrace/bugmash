@@ -1,6 +1,8 @@
 extern crate mailparse;
 #[macro_use]
 extern crate mysql;
+extern crate regex;
+extern crate victoria_dom;
 
 use std::collections::hash_map::DefaultHasher;
 use std::env;
@@ -12,6 +14,10 @@ use std::process;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use mailparse::{dateparse, MailHeaderMap, MailParseError, ParsedMail};
+
+use regex::Regex;
+
+use victoria_dom::DOM;
 
 fn save_file(data: &[u8]) -> String {
     let time = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
@@ -48,16 +54,24 @@ fn get_db() -> Result<mysql::Pool, String> {
     mysql::Pool::new(connstr).map_err(|e| format!("{:?}", e))
 }
 
-fn get_plain_body(mail: &ParsedMail) -> Result<Option<String>, MailParseError> {
-    if mail.ctype.mimetype == "text/plain" {
+fn get_body_with_type(mail: &ParsedMail, body_type: &'static str) -> Result<Option<String>, MailParseError> {
+    if mail.ctype.mimetype == body_type {
         return mail.get_body().map(Some);
     }
     for subpart in &mail.subparts {
-        if let Some(x) = get_plain_body(subpart)? {
+        if let Some(x) = get_body_with_type(subpart, body_type)? {
             return Ok(Some(x));
         }
     }
     Ok(None)
+}
+
+fn get_plain_body(mail: &ParsedMail) -> Result<Option<String>, MailParseError> {
+    get_body_with_type(mail, "text/plain")
+}
+
+fn get_html_body(mail: &ParsedMail) -> Result<Option<String>, MailParseError> {
+    get_body_with_type(mail, "text/html")
 }
 
 fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
@@ -161,6 +175,241 @@ fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     Ok(())
 }
 
+fn mail_header(mail: &ParsedMail, header: &str) -> Result<Option<String>, String> {
+    mail.headers.get_first_value(header).map_err(|e| format!("Unable to read mail header: {:?}", e))
+}
+
+fn bugmail_header(mail: &ParsedMail, header: &str) -> Result<Option<String>, String> {
+    mail_header(mail, &format!("X-Bugzilla-{}", header))
+}
+
+fn bugzilla_normalized_reason(mail: &ParsedMail) -> Result<String, String> {
+    let reason = bugmail_header(mail, "Reason")?.ok_or("Unable to find Reason header")?;
+    let watch_reason = bugmail_header(mail, "Watch-Reason")?;
+    if reason.find("AssignedTo").is_some() {
+        Ok("AssignedTo".to_string())
+    } else if reason.find("Reporter").is_some() {
+        Ok("Reporter".to_string())
+    } else if reason.find("CC").is_some() {
+        Ok("CC".to_string())
+    } else if reason.find("Voter").is_some() {
+        Ok("Voter".to_string())
+    } else if reason.find("None").is_some() {
+        if watch_reason.is_some() {
+            Ok("Watch".to_string())
+        } else {
+            Err(format!("Empty watch reason with reason {}", reason))
+        }
+    } else {
+        Err(format!("Unrecognized reason {}", reason))
+    }
+}
+
+fn insert_changes(db: &mysql::Pool, id: &str, stamp: i64, reason: &str, changes: &[(String, String, String)]) -> Result<(), String> {
+    let mut stmt = db.prepare(r#"INSERT INTO changes (bug, stamp, reason, field, oldval, newval)
+            VALUES (:id, FROM_UNIXTIME(:stamp), :reason, :field, :oldval, :newval)"#).map_err(|e| format!("{:?}", e))?;
+    for (field, oldval, newval) in changes {
+        stmt.execute(params!{
+            id,
+            stamp,
+            reason,
+            field,
+            oldval,
+            newval
+        }).map_err(|e| format!("{:?}", e))?;
+    }
+    Ok(())
+}
+
+fn insert_comments(db: &mysql::Pool, id: &str, stamp: i64, reason: &str, comments: &[(i32, String, String)]) -> Result<(), String> {
+    let mut stmt = db.prepare(r#"INSERT INTO comments (bug, stamp, reason, commentnum, author, comment)
+            VALUES (:id, FROM_UNIXTIME(:stamp), :reason, :commentnum, :author, :comment)"#).map_err(|e| format!("{:?}", e))?;
+    for (commentnum, author, comment) in comments {
+        stmt.execute(params!{
+            id,
+            stamp,
+            reason,
+            commentnum,
+            author,
+            comment
+        }).map_err(|e| format!("{:?}", e))?;
+    }
+    Ok(())
+}
+
+fn bugmail_body(mail: &ParsedMail) -> Result<DOM, String> {
+    let body = match get_html_body(mail).map_err(|e| format!("{:?}", e))? {
+        Some(x) => x,
+        None => return Err("No html body found".to_string()),
+    };
+    Ok(DOM::new(&body))
+}
+
+fn bugmail_body_text(mail: &ParsedMail) -> Result<String, String> {
+    get_plain_body(mail)
+        .map_err(|e| format!("{:?}", e))?
+        .map(|t| t.replace("\r", ""))
+        .ok_or("No plaintext body found".to_string())
+}
+
+fn scrape_bugmail_request(_mail: &ParsedMail) -> Result<(), String> {
+    // TODO
+    Err("Got a request type bugmail, not implemented yet".to_string())
+}
+
+fn scrape_bugmail_newbug(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: i64) -> Result<(), String> {
+    let reason = bugzilla_normalized_reason(mail)?;
+    let dom = bugmail_body(mail)?;
+    let mut title = None;
+    let author = bugmail_header(mail, "Who")?.ok_or("Couldn't find new bug author".to_string())?;
+
+    let body = bugmail_body_text(mail)?;
+    let body_re = Regex::new(r"(?s)Bug ID: .*?\n\n(.*\n\n)?-- \n").unwrap();
+    let body_m = body_re.captures(&body).ok_or("Unable to capture new bug description".to_string())?;
+    let description = body_m.get(1).map_or("", |m| m.as_str().trim());
+
+    let mut tr_opt = dom.at("div.new table tr");
+    while let Some(tr) = tr_opt {
+        let field = tr.at("td.c1")
+            .map(|d| d.text_all())
+            .ok_or("Couldn't find new bug details".to_string())?;
+        if field.contains("Summary") {
+            title = tr.at("td.c2").map(|d| d.text_all());
+            break;
+        }
+        tr_opt = tr.next();
+    }
+    let title = title.ok_or("Couldn't find bug summary in new bug details table".to_string())?;
+
+    db.prep_exec(r#"INSERT INTO newbugs (bug, stamp, reason, title, author, description)
+                    VALUES (:id, FROM_UNIXTIME(:stamp), :reason, :title, :author, :description)"#, params! {
+        id,
+        stamp,
+        "reason" => &reason,
+        title,
+        author,
+        description
+    }).map_err(|e| format!("{:?}", e))?;
+
+    let changes = scrape_change_table(&dom, "")?;
+    insert_changes(db, id, stamp, &reason, &changes)?;
+
+    Ok(())
+}
+
+fn scrape_change_table(dom: &DOM, field_prefix: &str) -> Result<Vec<(String, String, String)>, String> {
+    let mut changes = Vec::new();
+    let mut change_row = dom.at("div.diffs tr.head").and_then(|d| d.next());
+    while let Some(tr) = change_row {
+        let field = tr.at("td.c1")
+            .map(|d| d.text_all())
+            .ok_or("Couldn't find bug change table field".to_string())?;
+        let old = tr.at("td.c2")
+            .map(|d| d.text_all())
+            .ok_or("Couldn't find bug change table old value".to_string())?;
+        let new = tr.at("td.c2")
+            .and_then(|d| d.next())
+            .map(|d| d.text_all())
+            .ok_or("Couldn't find bug change table new value".to_string())?;
+        changes.push((format!("{}{}", field_prefix, field), old, new));
+        change_row = tr.next();
+    }
+    Ok(changes)
+}
+
+fn scrape_bugmail_depchange(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: i64) -> Result<(), String> {
+    let reason = bugzilla_normalized_reason(mail)?;
+    let dom = bugmail_body(mail)?;
+    let depbug_text = dom.at("body > b").map(|d| d.text_all()).ok_or("Unable to find bug dependency sentence")?;
+    let depbug_re = Regex::new(r"(?i)bug (\d+) depends on bug(?: |&nbsp;)(\d+), which changed state.").unwrap();
+    let depbug_m = depbug_re.captures(&depbug_text).ok_or("Dependency sentence didn't match expected regex".to_string())?;
+    if &depbug_m[1] != id {
+        return Err("Dependency sentence referred to wrong bug id".to_string());
+    }
+
+    let depbug = &depbug_m[2];
+    let changes = scrape_change_table(&dom, &format!("depbug-{}-", depbug))?;
+    insert_changes(db, id, stamp, &reason, &changes)
+}
+
+fn scrape_comments(mail: &ParsedMail) -> Result<Vec<(i32, String, String)>, String> {
+    let mut comment_tuples = Vec::new();
+    let body = bugmail_body_text(mail)?;
+    let body_re = Regex::new(r"(?sU)-- Comment #(\d+) from ([^\n]*) ---\n(.*)\n\n--").unwrap();
+    for capture in body_re.captures_iter(&body) {
+        let comment_num = &capture[1];
+        let mut author = String::from(&capture[2]);
+        let comment_text = &capture[3];
+        let stripped_len = author.len() - " YYYY-mm-dd HH:ii:ss ZZZ".len();
+        author.truncate(stripped_len);
+        if let Some(idx) = author.find('<') {
+            author.truncate(idx);
+        }
+        comment_tuples.push((comment_num.parse::<i32>().map_err(|e| format!("{:?}", e))?, author, comment_text.to_string()));
+    }
+    Ok(comment_tuples)
+}
+
+fn scrape_bugmail_change(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: i64) -> Result<(), String> {
+    let reason = bugzilla_normalized_reason(mail)?;
+    let dom = bugmail_body(mail)?;
+
+    let changes = scrape_change_table(&dom, "")?;
+    insert_changes(db, id, stamp, &reason, &changes)?;
+
+    let comments = scrape_comments(mail)?;
+    insert_comments(db, id, stamp, &reason, &comments)?;
+
+    if changes.len() == 0 && comments.len() == 0 {
+        return Err("Unable to extract meaningful data from changed email".to_string());
+    }
+    Ok(())
+}
+
+fn scrape_bugzilla_mail(bz_type: &str, mail: &ParsedMail) -> Result<(), String> {
+    if bz_type == "nag" {
+        return Ok(());
+    }
+
+    let secure = bugmail_header(mail, "Secure-Email")?.is_some();
+    let id = bugmail_header(mail, "ID")?.ok_or("Unable to find bug id".to_string())?;
+    let stamp = mail_header(mail, "Date")?.map(|v| dateparse(&v).unwrap_or(0)).unwrap_or(0);
+
+    let subject = mail_header(mail, "Subject")?.ok_or("Unable to find subject header".to_string())?;
+    let subject_re = Regex::new(r"(?sU)\[Bug \d+\] (.*)( : \[Attachment.*)?$").unwrap();
+    let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match expected regex".to_string())?;
+    let title = &subject_m[1];
+
+    let db = get_db()?;
+    db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
+                                 VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")
+                                 ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)"#, params! {
+        "id" => &id,
+        stamp,
+        title,
+        secure,
+    }).map_err(|e| format!("{:?}", e))?;
+
+    if secure {
+        // you haven't set a PGP/GPG key and this is for a secure bug, so there's no data in it.
+        let reason = bugzilla_normalized_reason(mail)?;
+        let unknown = "Unknown";
+        let changes = vec![ (unknown.to_string(), unknown.to_string(), unknown.to_string()) ];
+        insert_changes(&db, &id, stamp, &reason, &changes)?;
+        Ok(())
+    } else if bz_type == "request" {
+        scrape_bugmail_request(mail)
+    } else if bz_type == "new" {
+        scrape_bugmail_newbug(mail, &db, &id, stamp)
+    } else if bz_type == "dep_changed" {
+        scrape_bugmail_depchange(mail, &db, &id, stamp)
+    } else if bz_type == "changed" {
+        scrape_bugmail_change(mail, &db, &id, stamp)
+    } else {
+        Err(format!("Unknown bugmail type {}", bz_type))
+    }
+}
+
 fn main() {
     let mut input = Vec::new();
     {
@@ -175,7 +424,13 @@ fn main() {
 
     let github_reason = mail.headers.get_first_value("X-GitHub-Reason").unwrap_or_else(|e| fail(&saved_file, "Unable to read mail header", format!("{:?}", e)));
     if github_reason.is_some() {
-        scrape_github_mail(&mail).unwrap_or_else(|e| fail(&saved_file, "Error while scraping mail", e));
+        scrape_github_mail(&mail).unwrap_or_else(|e| fail(&saved_file, "Error while scraping github mail", e));
+        fs::remove_file(&saved_file).unwrap_or_else(|e| fail(&saved_file, "Error removing file after processing", format!("{:?}", e)));
+    }
+
+    let bugzilla_type = mail.headers.get_first_value("X-Bugzilla-Type").unwrap_or_else(|e| fail(&saved_file, "Unable to read mail header", format!("{:?}", e)));
+    if let Some(bz_type) = bugzilla_type {
+        scrape_bugzilla_mail(&bz_type, &mail).unwrap_or_else(|e| fail(&saved_file, "Error while scraping bugzilla mail", e));
         fs::remove_file(&saved_file).unwrap_or_else(|e| fail(&saved_file, "Error removing file after processing", format!("{:?}", e)));
     }
 }
