@@ -252,9 +252,23 @@ fn bugmail_body_text(mail: &ParsedMail) -> Result<String, String> {
         .ok_or("No plaintext body found".to_string())
 }
 
-fn scrape_bugmail_request(_mail: &ParsedMail) -> Result<(), String> {
-    // TODO
-    Err("Got a request type bugmail, not implemented yet".to_string())
+fn scrape_bugmail_request(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: i64) -> Result<(), String> {
+    let requestee = bugmail_header(mail, "Flag-Requestee")?;
+    if requestee.is_none() {
+        return Err("Got a request type bugmail with no requestee, not implemented yet".to_string());
+    }
+    let flag = mail_header(mail, "Subject")?
+        .and_then(|s| s.split_ascii_whitespace().next().map(str::to_string))
+        .ok_or("Got a request type bugmail with no subject, not implemented yet".to_string())?;
+    db.prep_exec(r#"INSERT INTO requests (bug, stamp, attachment, title, flag)
+                    VALUES (:id, FROM_UNIXTIME(:stamp), :attachment, :title, :flag)"#, params! {
+        id,
+        stamp,
+        "attachment" => 0,
+        "title" => "",
+        flag
+    }).map_err(|e| format!("{:?}", e))?;
+    Ok(())
 }
 
 fn scrape_bugmail_newbug(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: i64) -> Result<(), String> {
@@ -398,7 +412,7 @@ fn scrape_bugzilla_mail(bz_type: &str, mail: &ParsedMail) -> Result<(), String> 
         insert_changes(&db, &id, stamp, &reason, &changes)?;
         Ok(())
     } else if bz_type == "request" {
-        scrape_bugmail_request(mail)
+        scrape_bugmail_request(mail, &db, &id, stamp)
     } else if bz_type == "new" {
         scrape_bugmail_newbug(mail, &db, &id, stamp)
     } else if bz_type == "dep_changed" {
