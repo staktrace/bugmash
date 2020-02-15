@@ -369,7 +369,7 @@ foreach ($bblocks AS $bug => &$block) {
 $_DB->close();
 
 $errors = 0;
-$files = scandir( $BUGMASH_DIR );
+$files = scandir( $_SERVER['DOCUMENT_ROOT'] . "/../../" );
 foreach ($files AS $file) {
     if (strpos( strrev( $file ), "rre." ) === 0) {
         $errors++;
