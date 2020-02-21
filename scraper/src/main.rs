@@ -254,12 +254,24 @@ fn bugmail_body_text(mail: &ParsedMail) -> Result<String, String> {
 
 fn scrape_bugmail_request(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: i64) -> Result<(), String> {
     let requestee = bugmail_header(mail, "Flag-Requestee")?;
-    if requestee.is_none() {
-        return Err("Got a request type bugmail with no requestee, not implemented yet".to_string());
-    }
     let flag = mail_header(mail, "Subject")?
         .and_then(|s| s.split_ascii_whitespace().next().map(str::to_string))
         .ok_or("Got a request type bugmail with no subject, not implemented yet".to_string())?;
+    if requestee.is_none() {
+        let cancelled = mail_header(mail, "Subject")?
+            .and_then(|s| s.split_ascii_whitespace().nth(1).map(str::to_string))
+            .map(|s| s.starts_with("canceled"))
+            .ok_or("Got a request type bugmail with no requestee and unexpected subject".to_string())?;
+        if cancelled {
+            db.prep_exec(r#"UPDATE requests SET cancelled=1 WHERE bug=:id and attachment=:attachment AND flag=:flag"#, params! {
+                id,
+                "attachment" => 0,
+                flag
+            }).map_err(|e| format!("{:?}", e))?;
+            return Ok(());
+        }
+        return Err("Got a request type bugmail with no requestee, not implemented yet".to_string());
+    }
     db.prep_exec(r#"INSERT INTO requests (bug, stamp, attachment, title, flag)
                     VALUES (:id, FROM_UNIXTIME(:stamp), :attachment, :title, :flag)"#, params! {
         id,
