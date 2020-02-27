@@ -416,15 +416,15 @@ fn scrape_bugzilla_mail(bz_type: &str, mail: &ParsedMail) -> Result<(), String> 
         secure,
     }).map_err(|e| format!("{:?}", e))?;
 
-    if secure {
+    if bz_type == "request" {
+        scrape_bugmail_request(mail, &db, &id, stamp)
+    } else if secure {
         // you haven't set a PGP/GPG key and this is for a secure bug, so there's no data in it.
         let reason = bugzilla_normalized_reason(mail)?;
         let unknown = "Unknown";
         let changes = vec![ (unknown.to_string(), unknown.to_string(), unknown.to_string()) ];
         insert_changes(&db, &id, stamp, &reason, &changes)?;
         Ok(())
-    } else if bz_type == "request" {
-        scrape_bugmail_request(mail, &db, &id, stamp)
     } else if bz_type == "new" {
         scrape_bugmail_newbug(mail, &db, &id, stamp)
     } else if bz_type == "dep_changed" {
