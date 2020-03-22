@@ -258,15 +258,30 @@ fn scrape_bugmail_request(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: 
         .and_then(|s| s.split_ascii_whitespace().next().map(str::to_string))
         .ok_or("Got a request type bugmail with no subject, not implemented yet".to_string())?;
     if requestee.is_none() {
-        let cancelled = mail_header(mail, "Subject")?
+        let action = mail_header(mail, "Subject")?
             .and_then(|s| s.split_ascii_whitespace().nth(1).map(str::to_string))
-            .map(|s| s.starts_with("canceled"))
             .ok_or("Got a request type bugmail with no requestee and unexpected subject".to_string())?;
-        if cancelled {
+        if action.starts_with("canceled") {
             db.prep_exec(r#"UPDATE requests SET cancelled=1 WHERE bug=:id and attachment=:attachment AND flag=:flag"#, params! {
                 id,
                 "attachment" => 0,
                 flag
+            }).map_err(|e| format!("{:?}", e))?;
+            return Ok(());
+        }
+        if action.starts_with("granted:") {
+            let author_email = bugmail_header(mail, "Who")?;
+            db.prep_exec(r#"INSERT INTO reviews (bug, stamp, attachment, title, flag, author, authoremail, granted, comment)
+                            VALUES (:id, FROM_UNIXTIME(:stamp), :attachment, :title, :flag, :author, :author_email, :granted, :comment)"#, params! {
+                id,
+                stamp,
+                "attachment" => 0,
+                "title" => "",
+                flag,
+                "author" => "",
+                author_email,
+                "granted" => 1,
+                "comment" => "",
             }).map_err(|e| format!("{:?}", e))?;
             return Ok(());
         }
