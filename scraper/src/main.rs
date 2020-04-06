@@ -285,6 +285,22 @@ fn scrape_bugmail_request(mail: &ParsedMail, db: &mysql::Pool, id: &str, stamp: 
             }).map_err(|e| format!("{:?}", e))?;
             return Ok(());
         }
+        if action == "not" {
+            let author_email = bugmail_header(mail, "Who")?;
+            db.prep_exec(r#"INSERT INTO reviews (bug, stamp, attachment, title, flag, author, authoremail, granted, comment)
+                            VALUES (:id, FROM_UNIXTIME(:stamp), :attachment, :title, :flag, :author, :author_email, :granted, :comment)"#, params! {
+                id,
+                stamp,
+                "attachment" => 0,
+                "title" => "",
+                flag,
+                "author" => "",
+                author_email,
+                "granted" => 0,
+                "comment" => "",
+            }).map_err(|e| format!("{:?}", e))?;
+            return Ok(());
+        }
         return Err("Got a request type bugmail with no requestee, not implemented yet".to_string());
     }
     db.prep_exec(r#"INSERT INTO requests (bug, stamp, attachment, title, flag)
