@@ -108,14 +108,25 @@ fn url_parts(footer: String) -> Option<(String, String, Option<String>)> {
                  hash));
 }
 
-fn split_footer(msg: String) -> (String, Option<String>) {
+fn split_footer(msg: &str) -> (String, Option<String>) {
     // Avoid trying to match newlines directly since they can be either \r\n or \n
     let ix = msg.rfind("You are receiving this because")
                 .and_then(|ix| msg[0..ix].rfind("-- "));
     match ix {
         Some(ix) => (String::from(&msg[0..ix]), Some(String::from(&msg[ix..]))),
-        None => (msg, None),
+        None => (String::from(msg), None),
     }
+}
+
+fn first_github_url(body: &str) -> Option<(String, String, Option<String>)> {
+    let prefix = "https://github.com/";
+    let ix = body.find(prefix)? + prefix.len();
+    let end_ix = ix + body[ix..].find(char::is_whitespace)?;
+    let urlpath = &body[ix..end_ix];
+    let slash = "/";
+    let org_end_ix = urlpath.find(slash)?;
+    let repo_end_ix = org_end_ix + urlpath[org_end_ix..].find(slash)?;
+    Some((String::from(&urlpath[0..repo_end_ix]), String::from(&urlpath[repo_end_ix + 1..]), None))
 }
 
 fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
@@ -135,17 +146,21 @@ fn scrape_github_mail(mail: &ParsedMail) -> Result<(), String> {
     let sender = mail.headers.get_first_value("X-GitHub-Sender").map_err(|e| format!("{:?}", e))?.unwrap_or("Unknown".to_string());
     let reason = match mail.headers.get_first_value("X-GitHub-Reason").map_err(|e| format!("{:?}", e))? {
         Some(ref s) if s == "review_requested" => "review",
+        Some(ref s) if s == "ci_activity" => "review",
         Some(ref s) if s == "author" => "Reporter",
         Some(ref s) if s == "mention" => "CC",
         _ => "Watch",
     };
     let stamp = mail.headers.get_first_value("Date").map_err(|e| format!("{:?}", e))?.map(|v| dateparse(&v).unwrap_or(0)).unwrap_or(0);
-    let (comment, footer) = match get_plain_body(mail).map_err(|e| format!("{:?}", e))? {
-        Some(x) => split_footer(x),
+    let plain_body = match get_plain_body(mail).map_err(|e| format!("{:?}", e))? {
+        Some(x) => x,
         None => return Err("No plaintext body found".to_string()),
     };
+    let (comment, footer) = split_footer(&plain_body);
     let footer = footer.ok_or("Unable to find footer".to_string())?;
-    let (repo, issue, hash) = url_parts(footer).ok_or("Unable to extract URL parts".to_string())?;
+    let (repo, issue, hash) = url_parts(footer)
+        .or_else(|| first_github_url(&plain_body))
+        .ok_or("Unable to extract URL parts".to_string())?;
     let hash = hash.unwrap_or(String::from(""));
 
     let id = format!("{}#{}", repo, issue);
