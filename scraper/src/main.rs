@@ -482,6 +482,10 @@ fn scrape_bugzilla_mail(bz_type: &str, mail: &ParsedMail) -> Result<(), String> 
     }
 }
 
+fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
+    Err(format!("Unhandled phabmail"))
+}
+
 fn main() {
     let mut input = Vec::new();
     {
@@ -503,6 +507,12 @@ fn main() {
     let bugzilla_type = mail.headers.get_first_value("X-Bugzilla-Type").unwrap_or_else(|e| fail(&saved_file, "Unable to read mail header", format!("{:?}", e)));
     if let Some(bz_type) = bugzilla_type {
         scrape_bugzilla_mail(&bz_type, &mail).unwrap_or_else(|e| fail(&saved_file, "Error while scraping bugzilla mail", e));
+        fs::remove_file(&saved_file).unwrap_or_else(|e| fail(&saved_file, "Error removing file after processing", format!("{:?}", e)));
+    }
+
+    let phabricator = mail.headers.get_first_value("X-Phabricator-Sent-This-Message").unwrap_or_else(|e| fail(&saved_file, "Unable to read mail header", format!("{:?}", e)));
+    if phabricator.is_some() {
+        scrape_phabricator_mail(&mail).unwrap_or_else(|e| fail(&saved_file, "Error while scraping phab mail", e));
         fs::remove_file(&saved_file).unwrap_or_else(|e| fail(&saved_file, "Error removing file after processing", format!("{:?}", e)));
     }
 }
