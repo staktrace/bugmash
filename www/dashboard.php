@@ -121,6 +121,11 @@ function linkify_gh( $text, $base_repo ) {
     return $text;
 }
 
+function linkify_phab( $text ) {
+    $text = preg_replace( '#\[(.*?)\]\((https?://.*?)\)#i', '<a class="linkified" href="$2">$1</a>', $text );   // markdown links
+    return $text;
+}
+
 function buglinkify( $field, $text ) {
     global $_BASE_URL;
     if ($field === 'Depends on' || $field === 'Blocks' || $field === 'Regressions' || $field === 'Regressed by') {
@@ -335,10 +340,25 @@ while ($row = $result->fetch_assoc()) {
     $reasons[ $bugid ][] = $row['reason'];
 }
 
+$result = loadTable( 'phab_diffs' );
+while ($row = $result->fetch_assoc()) {
+    $numRows++;
+    $stamp = strtotime( $row['stamp'] );
+    $bugid = $row['revision'];
+    initEmpty( $bblocks, $bugid, $stamp );
+    $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="d%d">%s <a href="%s/%s">said</a>:<br/>%s</div>',
+                                             $row['id'],
+                                             escapeHTML( $row['author'] ),
+                                             $_PHAB_BASE_URL,
+                                             $row['revision'],
+                                             linkify_phab( escapeHTML( $row['comment'] ) ) ) . "\n";
+    $reasons[ $bugid ][] = $row['reason'];
+}
+
 foreach ($bblocks AS $bug => &$block) {
     ksort( $block, SORT_NUMERIC );
     $touchTime = key( $block );
-    $identifier = (isGithubIssue( $bug ) ? 'gh_' : 'bug') . $bug;
+    $identifier = (isGithubIssue( $bug ) ? 'gh_' : (isPhabDiff( $bug ) ? 'pd_' : 'bug')) . $bug;
     $block = sprintf( '<div class="%sbug" id="%s"><div class="title">'
                     . '<a class="wipe" href="#">X&nbsp;</a>'
                     . '<a class="noteify" href="#" title="%s" onclick="return noteify(this, \'%s\')">%s</a>'

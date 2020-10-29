@@ -32,6 +32,9 @@ foreach ($ids AS $id) {
         case 'g':
             $table = 'gh_issues';
             break;
+        case 'd':
+            $table = 'phab_diffs';
+            break;
     }
     $rowId = intval( substr( $id, 1 ) );
     $_DB->query( "UPDATE {$table} SET viewed=1 WHERE id={$rowId}" );

@@ -22,7 +22,6 @@ function fail( $message ) {
 $BUGMASH_DIR = $_SERVER['DOCUMENT_ROOT'] . '/../scraper';
 include_once( $BUGMASH_DIR . '/config.php' );
 $_GH_BASE_URL = "https://github.com/";
-$_PHAB_BASE_URL = "https://phabricator.services.mozilla.com";
 
 function updateTags( $newTags ) {
     global $_DB;
@@ -57,34 +56,18 @@ function escapeHTML( $stuff ) {
     return $stuff;
 }
 
-function isGithubIssue( $bugid ) {
-    return (strpos( $bugid, '#' ) !== FALSE);
-}
-
-function isGithubCommit( $bugid ) {
-    return (strlen( $bugid ) - strpos( $bugid, '#' )) >= 40;
-}
-
-function isPhabDiff( $bugid ) {
-    return ($bugid[0] == 'D');
-}
-
-function makeBugLink( $bugid ) {
-    global $_BASE_URL, $_GH_BASE_URL, $_PHAB_BASE_URL;
-
-    if (isGithubIssue( $bugid )) {
-	$type = isGithubCommit( $bugid ) ? '/commit/' : '/issues/';
-	return sprintf( '<a href="%s">%s</a>',
-                        $_GH_BASE_URL . str_replace( '#', $type, $bugid ),
-		        $bugid );
-    } else if (isPhabDiff( $bugid )) {
-        return sprintf( '<a href="%s/%s">%s</a>',
-		        $_PHAB_BASE_URL, $bugid, $bugid );
-    } else {
-        return sprintf( '<a href="%s">%s</a>',
-                        $_BASE_URL . '/show_bug.cgi?id=' . $bugid,
-		        "Bug " . $bugid );
-    }
-}
+//function bugLink( $bugid ) {
+//    global $_BASE_URL, $_GH_BASE_URL;
+//
+//    if (strpos( $bugid, '#' ) !== FALSE) {
+//	return sprintf( '<a href="%s">%s</a>',
+//                        $_GH_BASE_URL . str_replace( '#', '/issues/', $bugid ),
+//		        $bugid);
+//    } else {
+//        return sprintf( '<a href="%s">%s</a>',
+//                        $_BASE_URL . '/show_bug.cgi?id=' . $bugid,
+//		        "Bug " . $bugid);
+//    }
+//}
 
 ?>
