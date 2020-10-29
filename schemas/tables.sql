@@ -92,6 +92,20 @@ CREATE TABLE `gh_issues` (
     KEY (`viewed`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE `phab_diffs` (
+    `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+    `revision` varchar(32) NOT NULL,
+    `stamp` datetime NOT NULL,
+    `viewed` tinyint(1) NOT NULL DEFAULT 0,
+    `reason` varchar(10) NOT NULL,
+    `author` varchar(255) NOT NULL,
+    `comment` mediumtext NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY (`revision`),
+    KEY (`stamp`),
+    KEY (`viewed`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `metadata` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
     `bug` varchar(128) NOT NULL,
