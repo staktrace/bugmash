@@ -483,7 +483,53 @@ fn scrape_bugzilla_mail(bz_type: &str, mail: &ParsedMail) -> Result<(), String> 
 }
 
 fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
-    Err(format!("Unhandled phabmail"))
+    let stamp = mail_header(mail, "Date")?.map(|v| dateparse(&v).unwrap_or(0)).unwrap_or(0);
+
+    let stamps = mail_header(mail, "X-Phabricator-Stamps")?.ok_or("Unable to get stamps header".to_string())?;
+    let actor_re = Regex::new(r"actor\((.*?)\)").unwrap();
+    let actor_m = actor_re.captures(&stamps).ok_or("Stamps header didn't match actor regex".to_string())?;
+    let actor = &actor_m[1];
+
+    let reason = match &stamps {
+        s if s.contains("reviewer(@kats)") => "review",
+        s if s.contains("author(@kats)") => "Reporter",
+        _ => "CC",
+    };
+
+    let subject = mail_header(mail, "Subject")?.ok_or("Unable to find subject header".to_string())?;
+    let subject_re = Regex::new(r"Differential.* (D\d+): (.*)").unwrap();
+    let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match differential regex".to_string())?;
+    let phab = &subject_m[1];
+    let title = &subject_m[2];
+
+    let db = get_db()?;
+    db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
+                                 VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")
+                                 ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)"#, params! {
+        "id" => &phab,
+        stamp,
+        title,
+        "secure" => false,
+    }).map_err(|e| format!("{:?}", e))?;
+
+    let plain_body = match get_plain_body(mail).map_err(|e| format!("{:?}", e))? {
+        Some(x) => x,
+        None => return Err("No plaintext body found".to_string()),
+    };
+
+    let result = db.prep_exec(r#"INSERT INTO phab_diffs (revision, stamp, reason, author, comment)
+                                 VALUES (:revision, FROM_UNIXTIME(:stamp), :reason, :actor, :comment)"#, params! {
+        "revision" => &phab,
+        stamp,
+        reason,
+        actor,
+        "comment" => &plain_body,
+    }).map_err(|e| format!("{:?}", e))?;
+    if result.affected_rows() != 1 {
+        return Err(format!("Affected row count for phab_diffs was {}, not 1", result.affected_rows()));
+    }
+
+    Ok(())
 }
 
 fn main() {
