@@ -512,10 +512,13 @@ fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
         "secure" => false,
     }).map_err(|e| format!("{:?}", e))?;
 
-    let plain_body = match get_plain_body(mail).map_err(|e| format!("{:?}", e))? {
+    let mut plain_body = match get_plain_body(mail).map_err(|e| format!("{:?}", e))? {
         Some(x) => x,
         None => return Err("No plaintext body found".to_string()),
     };
+    if let Some(ix) = plain_body.find("\nREVISION DETAIL") {
+        plain_body = plain_body[0..ix].to_string();
+    }
 
     let result = db.prep_exec(r#"INSERT INTO phab_diffs (revision, stamp, reason, author, comment)
                                  VALUES (:revision, FROM_UNIXTIME(:stamp), :reason, :actor, :comment)"#, params! {
