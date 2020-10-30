@@ -122,7 +122,7 @@ function linkify_gh( $text, $base_repo ) {
 }
 
 function linkify_phab( $text ) {
-    $text = preg_replace( '#\[(.*?)\]\((https?://.*?)\)#i', '<a class="linkified" href="$2">$1</a>', $text );   // markdown links
+    $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
     return $text;
 }
 
