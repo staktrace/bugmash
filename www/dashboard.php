@@ -346,7 +346,7 @@ while ($row = $result->fetch_assoc()) {
     $stamp = strtotime( $row['stamp'] );
     $bugid = $row['revision'];
     initEmpty( $bblocks, $bugid, $stamp );
-    $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="d%d">%s <a href="%s/%s">said</a>:<br/>%s</div>',
+    $bblocks[ $bugid ][ $stamp ] .= sprintf( '<div class="row" id="p%d">%s <a href="%s/%s">said</a>:<br/>%s</div>',
                                              $row['id'],
                                              escapeHTML( $row['author'] ),
                                              $_PHAB_BASE_URL,

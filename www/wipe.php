@@ -32,7 +32,7 @@ foreach ($ids AS $id) {
         case 'g':
             $table = 'gh_issues';
             break;
-        case 'd':
+        case 'p':
             $table = 'phab_diffs';
             break;
     }
