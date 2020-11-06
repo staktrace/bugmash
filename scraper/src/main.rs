@@ -496,22 +496,6 @@ fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
         _ => "CC",
     };
 
-    let subject = mail_header(mail, "Subject")?.ok_or("Unable to find subject header".to_string())?;
-    let subject_re = Regex::new(r"Differential.* (D\d+): (.*)").unwrap();
-    let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match differential regex".to_string())?;
-    let phab = &subject_m[1];
-    let title = &subject_m[2];
-
-    let db = get_db()?;
-    db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
-                                 VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")
-                                 ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)"#, params! {
-        "id" => &phab,
-        stamp,
-        title,
-        "secure" => false,
-    }).map_err(|e| format!("{:?}", e))?;
-
     let mut plain_body = match get_plain_body(mail).map_err(|e| format!("{:?}", e))? {
         Some(x) => x,
         None => return Err("No plaintext body found".to_string()),
@@ -519,6 +503,30 @@ fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
     if let Some(ix) = plain_body.find("\nREVISION DETAIL") {
         plain_body = plain_body[0..ix].to_string();
     }
+
+    let subject = mail_header(mail, "Subject")?.ok_or("Unable to find subject header".to_string())?;
+
+    let (phab, title) = if stamps.contains("application(Diffusion)") {
+        let subject_re = Regex::new(r"Diffusion[^:]*:(.*)").unwrap();
+        let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match diffusion regex".to_string())?;
+        let diff_re = Regex::new(r"Differential Revision: https://phabricator.services.mozilla.com/(D\d+)").unwrap();
+        let diff_m = diff_re.captures(&plain_body).ok_or("Diffusion body didn't match differential regex".to_string())?;
+        (diff_m[1].to_string(), subject_m[1].to_string())
+    } else {
+        let subject_re = Regex::new(r"Differential.* (D\d+): (.*)").unwrap();
+        let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match differential regex".to_string())?;
+        (subject_m[1].to_string(), subject_m[2].to_string())
+    };
+
+    let db = get_db()?;
+    db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
+                                 VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")
+                                 ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)"#, params! {
+        "id" => &phab,
+        stamp,
+        "title" => &title,
+        "secure" => false,
+    }).map_err(|e| format!("{:?}", e))?;
 
     let result = db.prep_exec(r#"INSERT INTO phab_diffs (revision, stamp, reason, author, comment)
                                  VALUES (:revision, FROM_UNIXTIME(:stamp), :reason, :actor, :comment)"#, params! {
