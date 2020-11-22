@@ -44,7 +44,8 @@ $_SEARCH_COLUMNS = array(
     'changes' => array( 'field', 'oldval', 'newval' ),
     'comments' => array( 'author', 'comment' ),
     'newbugs' => array( 'title', 'author', 'description' ),
-    'metadata' => array( 'title' )
+    'metadata' => array( 'title' ),
+    'gh_issues' => array( 'author', 'comment' ),
 );
 
 function lengthSort( $a, $b ) {

@@ -506,12 +506,22 @@ fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
 
     let subject = mail_header(mail, "Subject")?.ok_or("Unable to find subject header".to_string())?;
 
+    let mut bugzilla = false;
     let (phab, title) = if stamps.contains("application(Diffusion)") {
         let subject_re = Regex::new(r"Diffusion[^:]*:(.*)").unwrap();
         let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match diffusion regex".to_string())?;
         let diff_re = Regex::new(r"Differential Revision: https://phabricator.services.mozilla.com/(D\d+)").unwrap();
-        let diff_m = diff_re.captures(&plain_body).ok_or("Diffusion body didn't match differential regex".to_string())?;
-        (diff_m[1].to_string(), subject_m[1].to_string())
+        if let Some(diff_m) = diff_re.captures(&plain_body) {
+            (diff_m[1].to_string(), subject_m[1].to_string())
+        } else {
+            let bug_re = Regex::new(r"(?i)bug (\d+)").unwrap();
+            let bug_m = bug_re.captures(&subject_m[1]).ok_or("Unrecognized diffusion email type".to_string())?;
+            bugzilla = true;
+            if let Some(ix) = plain_body.find("\nBRANCHES") {
+                plain_body = plain_body[0..ix].to_string();
+            }
+            (bug_m[1].to_string(), subject_m[1].to_string())
+        }
     } else {
         let subject_re = Regex::new(r"Differential.* (D\d+): (.*)").unwrap();
         let subject_m = subject_re.captures(&subject).ok_or("Subject header didn't match differential regex".to_string())?;
@@ -519,25 +529,46 @@ fn scrape_phabricator_mail(mail: &ParsedMail) -> Result<(), String> {
     };
 
     let db = get_db()?;
-    db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
-                                 VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")
-                                 ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)"#, params! {
-        "id" => &phab,
-        stamp,
-        "title" => &title,
-        "secure" => false,
-    }).map_err(|e| format!("{:?}", e))?;
-
-    let result = db.prep_exec(r#"INSERT INTO phab_diffs (revision, stamp, reason, author, comment)
-                                 VALUES (:revision, FROM_UNIXTIME(:stamp), :reason, :actor, :comment)"#, params! {
-        "revision" => &phab,
-        stamp,
-        reason,
-        actor,
-        "comment" => &plain_body,
-    }).map_err(|e| format!("{:?}", e))?;
-    if result.affected_rows() != 1 {
-        return Err(format!("Affected row count for phab_diffs was {}, not 1", result.affected_rows()));
+    if bugzilla {
+        // Don't update anything on duplicate key, leave bugmail as source of truth
+        db.prep_exec(r#"INSERT IGNORE INTO metadata (bug, stamp, title, secure, note)
+                                     VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")"#, params! {
+            "id" => &phab,
+            stamp,
+            "title" => &title,
+            "secure" => false,
+        }).map_err(|e| format!("{:?}", e))?;
+        let result = db.prep_exec(r#"INSERT INTO comments (bug, stamp, reason, commentnum, author, comment)
+                        VALUES (:id, FROM_UNIXTIME(:stamp), :reason, 0, :actor, :comment)"#, params! {
+            "id" => &phab,
+            stamp,
+            reason,
+            actor,
+            "comment" => &plain_body,
+        }).map_err(|e| format!("{:?}", e))?;
+        if result.affected_rows() != 1 {
+            return Err(format!("Affected row count for comments was {}, not 1", result.affected_rows()));
+        }
+    } else {
+        db.prep_exec(r#"INSERT INTO metadata (bug, stamp, title, secure, note)
+                                     VALUES (:id, FROM_UNIXTIME(:stamp), :title, :secure, "")
+                                     ON DUPLICATE KEY UPDATE stamp=VALUES(stamp), title=VALUES(title), secure=VALUES(secure)"#, params! {
+            "id" => &phab,
+            stamp,
+            "title" => &title,
+            "secure" => false,
+        }).map_err(|e| format!("{:?}", e))?;
+        let result = db.prep_exec(r#"INSERT INTO phab_diffs (revision, stamp, reason, author, comment)
+                                     VALUES (:revision, FROM_UNIXTIME(:stamp), :reason, :actor, :comment)"#, params! {
+            "revision" => &phab,
+            stamp,
+            reason,
+            actor,
+            "comment" => &plain_body,
+        }).map_err(|e| format!("{:?}", e))?;
+        if result.affected_rows() != 1 {
+            return Err(format!("Affected row count for phab_diffs was {}, not 1", result.affected_rows()));
+        }
     }
 
     Ok(())
