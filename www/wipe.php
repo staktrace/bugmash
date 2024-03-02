@@ -13,7 +13,7 @@ if (mysqli_connect_errno()) {
 
 $ids = explode( ',', $_POST['ids'] );
 foreach ($ids AS $id) {
-    switch ($id{0}) {
+    switch ($id[0]) {
         case 'r':
             $table = 'reviews';
             break;

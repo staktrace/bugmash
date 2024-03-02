@@ -107,8 +107,8 @@ function buglink( $prefix, $bug ) {
 function linkify( $text, $bug ) {
     global $_BASE_URL;
     $text = preg_replace( '#(https?://\S+)#i', '<a class="linkified" href="$1">$1</a>', $text );
-    $text = preg_replace( '/(bug\s+)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
-    $text = preg_replace( '/(bug-)(\d+)/ie', 'buglink(\'\\1\', \'\\2\')', $text );
+    $text = preg_replace_callback( '/(bug\s+)(\d+)/i', function($m) { return buglink($m[1], $m[2]); }, $text );
+    $text = preg_replace_callback( '/(bug-)(\d+)/i', function($m) { return buglink($m[1], $m[2]); }, $text );
     $text = preg_replace( '/(Attachment #?)(\d+)/i', '<a class="linkified" href="' . $_BASE_URL . '/attachment.cgi?id=$2">$1$2</a>', $text );
     return $text;
 }
@@ -129,7 +129,7 @@ function linkify_phab( $text ) {
 function buglinkify( $field, $text ) {
     global $_BASE_URL;
     if ($field === 'Depends on' || $field === 'Blocks' || $field === 'Regressions' || $field === 'Regressed by') {
-        $text = preg_replace( '/(\d+)/e', 'buglink(\'\', \'\\1\')', $text );
+        $text = preg_replace_callback( '/(\d+)/', function($m) { return buglink('', $m[1]); }, $text );
     }
     return $text;
 }
