@@ -11,7 +11,7 @@ CREATE TABLE `requests` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `reviews` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -29,7 +29,7 @@ CREATE TABLE `reviews` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `changes` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -44,7 +44,7 @@ CREATE TABLE `changes` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `comments` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -59,7 +59,7 @@ CREATE TABLE `comments` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `newbugs` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -74,7 +74,7 @@ CREATE TABLE `newbugs` (
     KEY (`bug`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `gh_issues` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -90,7 +90,7 @@ CREATE TABLE `gh_issues` (
     KEY (`repo`, `issue`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `phab_diffs` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -104,7 +104,7 @@ CREATE TABLE `phab_diffs` (
     KEY (`revision`),
     KEY (`stamp`),
     KEY (`viewed`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `metadata` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -112,10 +112,10 @@ CREATE TABLE `metadata` (
     `stamp` datetime NOT NULL,
     `title` varchar(1024) NOT NULL DEFAULT '',
     `secure` tinyint(1) NOT NULL DEFAULT 0,
-    `note` mediumtext NOT NULL DEFAULT '',
+    `note` mediumtext NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY (`bug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 
 CREATE TABLE `tags` (
     `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -124,4 +124,4 @@ CREATE TABLE `tags` (
     PRIMARY KEY (`id`),
     KEY (`bug`),
     KEY (`tag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
